@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Nexus V5 | Educational Portal</title>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0;
+    }
+    
+    :root {
+      --nexus-dark: #050508;
+      --nexus-panel: #0a0a12;
+      --nexus-glass: rgba(15, 15, 25, 0.92);
+      --nexus-neon: #00d2ff;
+      --nexus-purple: #7c5cff;
+      --nexus-border: rgba(124, 92, 255, 0.3);
+      --nexus-text: rgba(255, 255, 255, 0.95);
+      --nexus-text-dim: rgba(255, 255, 255, 0.65);
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --glow: 0 0 30px rgba(0, 210, 255, 0.3);
+    }
+
+    html {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    body {
+      height: 100vh;
+      height: 100dvh; /* Dynamic viewport height for mobile */
+      width: 100vw;
+      background: var(--nexus-dark);
+      color: var(--nexus-text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    /* Full-screen background gradient */
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: 
+        radial-gradient(1000px 600px at 10% 0%, rgba(124, 92, 255, 0.12), transparent 70%),
+        radial-gradient(800px 500px at 90% 20%, rgba(0, 210, 255, 0.08), transparent 65%),
+        radial-gradient(600px 600px at 50% 100%, rgba(32, 227, 178, 0.06), transparent 60%);
+    }
+
+    /* Fullscreen Notice */
+    #fullscreen-notice {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, var(--nexus-purple), var(--nexus-neon));
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    #fullscreen-notice.hidden {
+      display: none;
+    }
+    #fullscreen-notice button {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    #fullscreen-notice button:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
+
+    /* Boot Screen */
+    #boot-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--nexus-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s;
+    }
+    #boot-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .boot-logo {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: 8px;
+      background: linear-gradient(135deg, var(--nexus-neon), var(--nexus-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(0, 210, 255, 0.5);
+      margin-bottom: 2.5rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .boot-bar {
+      width: 280px;
+      height: 5px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .boot-progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--nexus-neon), var(--nexus-purple));
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Main Desktop - Full Screen */
+    #nexus-desktop {
+      position: fixed;
+      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      animation: fadeIn 0.6s ease;
+      overflow: hidden;
+    }
+    #nexus-desktop.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Control Strip - Sleek Design */
+    #control-strip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      background: var(--nexus-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--nexus-border);
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Search Bar */
+    #search-container {
+      flex: 1;
+      max-width: 450px;
+      display: flex;
+      gap: 8px;
+      position: relative;
+    }
+    #search-input {
+      flex: 1;
+      padding: 10px 16px 10px 42px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--nexus-border);
+      border-radius: 10px;
+      color: var(--nexus-text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.25s;
+      background-image: url("image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2300d2ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 14px center;
+    }
+    #search-input:focus {
+      border-color: var(--nexus-neon);
+      box-shadow: 0 0 0 3px rgba(0,210,255,0.15), 0 0 20px rgba(0,210,255,0.2);
+      background-color: rgba(0,0,0,0.5);
+    }
+    #search-input::placeholder {
+      color: var(--nexus-text-dim);
+    }
+    
+    #search-btn {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--nexus-purple), var(--nexus-neon));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(124, 92, 255, 0.3);
+    }
+    #search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 92, 255, 0.4), 0 0 20px rgba(0,210,255,0.3);
+    }
+    #search-btn:active {
+      transform: translateY(0);
+    }
+
+    /* URL Section */
+    #url-section {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 0 16px;
+      border-left: 1px solid var(--nexus-border);
+      border-right: 1px solid var(--nexus-border);
+    }
+    #url-input {
+      padding: 9px 14px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--nexus-border);
+      border-radius: 8px;
+      color: var(--nexus-text);
+      font-size: 13px;
+      width: 180px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    #url-input:focus {
+      border-color: var(--nexus-neon);
+      box-shadow: 0 0 0 3px rgba(0,210,255,0.1);
+      width: 200px;
+    }
+    #url-input::placeholder {
+      color: var(--nexus-text-dim);
+    }
+    
+    .btn {
+      padding: 9px 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--nexus-border);
+      border-radius: 8px;
+      color: var(--nexus-text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .btn:hover {
+      background: rgba(124, 92, 255, 0.2);
+      border-color: var(--nexus-neon);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--nexus-purple), var(--nexus-neon));
+      border: none;
+      box-shadow: 0 4px 15px rgba(124, 92, 255, 0.3);
+    }
+    .btn-primary:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 6px 20px rgba(124, 92, 255, 0.4), 0 0 20px rgba(0,210,255,0.3);
+    }
+    .btn-toggle {
+      position: relative;
+      padding: 9px 14px;
+      font-size: 12px;
+    }
+    .btn-toggle.active {
+      background: rgba(0, 210, 255, 0.2);
+      border-color: var(--nexus-neon);
+      color: var(--nexus-neon);
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    }
+    .btn-toggle.active::after {
+      content: '✓';
+      position: absolute;
+      right: 8px;
+      font-weight: 700;
+    }
+    .btn-fullscreen {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      color: white;
+    }
+    .btn-fullscreen:hover {
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Window System */
+    .nexus-window {
+      position: absolute;
+      min-width: 400px;
+      min-height: 300px;
+      background: var(--nexus-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--nexus-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), var(--glow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.15s ease, opacity 0.2s, box-shadow 0.2s;
+    }
+    .nexus-window:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 210, 255, 0.25);
+    }
+    .nexus-window.minimized {
+      transform: scale(0.92) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .window-header {
+      height: 44px;
+      background: linear-gradient(180deg, rgba(124, 92, 255, 0.15), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      cursor: grab;
+      border-bottom: 1px solid var(--nexus-border);
+      user-select: none;
+      position: relative;
+    }
+    .window-header:active {
+      cursor: grabbing;
+    }
+    .window-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--nexus-neon);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 250px;
+    }
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .win-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      color: #000;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .win-btn:hover {
+      transform: scale(1.1);
+    }
+    .win-min {
+      background: #ffbd2e;
+    }
+    .win-close {
+      background: #ff4d6d;
+    }
+    .win-proxy {
+      background: var(--nexus-purple);
+      color: white;
+      font-size: 12px;
+    }
+    
+    .window-body {
+      flex: 1;
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+    .window-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+    
+    /* Proxy Loading State */
+    .proxy-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--nexus-panel), var(--nexus-dark));
+      color: var(--nexus-text);
+      z-index: 20;
+    }
+    .proxy-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(124, 92, 255, 0.2);
+      border-top-color: var(--nexus-neon);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+      box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .proxy-status {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--nexus-neon);
+    }
+    .proxy-substatus {
+      font-size: 13px;
+      color: var(--nexus-text-dim);
+      text-align: center;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+    
+    /* Error Fallback UI */
+    .window-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background: linear-gradient(135deg, var(--nexus-panel), var(--nexus-dark));
+      text-align: center;
+      z-index: 10;
+      color: var(--nexus-text);
+    }
+    .fallback-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .fallback-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--nexus-neon);
+      margin-bottom: 12px;
+    }
+    .fallback-text {
+      font-size: 14px;
+      color: var(--nexus-text-dim);
+      margin-bottom: 28px;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    .fallback-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .fallback-btn {
+      padding: 12px 22px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--nexus-border);
+      border-radius: 10px;
+      color: var(--nexus-text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+    .fallback-btn:hover {
+      border-color: var(--nexus-neon);
+      background: rgba(0,210,255,0.12);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 210, 255, 0.25);
+    }
+    .fallback-btn.primary {
+      background: linear-gradient(135deg, var(--nexus-purple), var(--nexus-neon));
+      border: none;
+      color: white;
+      box-shadow: 0 4px 15px rgba(124, 92, 255, 0.3);
+    }
+    .fallback-btn.primary:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 6px 20px rgba(124, 92, 255, 0.4), 0 0 20px rgba(0,210,255,0.3);
+    }
+    
+    .resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 24px;
+      height: 24px;
+      cursor: nwse-resize;
+      z-index: 2;
+    }
+    .resize-handle::after {
+      content: '';
+      position: absolute;
+      bottom: 7px;
+      right: 7px;
+      width: 12px;
+      height: 12px;
+      border-right: 2px solid var(--nexus-neon);
+      border-bottom: 2px solid var(--nexus-neon);
+      opacity: 0.6;
+    }
+
+    /* Quick Launch - Bottom Bar */
+    #quick-launch {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 50;
+      padding: 12px 16px;
+      background: var(--nexus-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--nexus-border);
+      border-radius: 16px;
+      box-shadow: var(--shadow), 0 0 30px rgba(0, 0, 0, 0.5);
+      overflow-x: auto;
+      max-width: calc(100% - 40px);
+    }
+    #quick-launch::-webkit-scrollbar {
+      display: none;
+    }
+    .site-card {
+      min-width: 90px;
+      padding: 14px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--nexus-border);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s;
+    }
+    .site-card:hover {
+      background: rgba(124, 92, 255, 0.15);
+      border-color: var(--nexus-neon);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 210, 255, 0.3);
+    }
+    .site-favicon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      transition: all 0.2s;
+    }
+    .site-card:hover .site-favicon {
+      transform: scale(1.1);
+    }
+    .site-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--nexus-text);
+      white-space: nowrap;
+    }
+
+    /* Proxy Badge */
+    .proxy-badge {
+      position: absolute;
+      top: 10px;
+      right: 52px;
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: rgba(124, 92, 255, 0.25);
+      color: var(--nexus-purple);
+      border: 1px solid var(--nexus-border);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* Toast Notifications */
+    #toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--nexus-panel);
+      border: 1px solid var(--nexus-border);
+      border-left: 4px solid var(--nexus-neon);
+      border-radius: 10px;
+      padding: 14px 24px;
+      color: var(--nexus-text);
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow), 0 0 30px rgba(0, 210, 255, 0.3);
+      z-index: 2000;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      max-width: 450px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    #toast.error {
+      border-left-color: #ff4d6d;
+      background: rgba(255, 77, 109, 0.1);
+    }
+    #toast.info {
+      border-left-color: var(--nexus-purple);
+      background: rgba(124, 92, 255, 0.1);
+    }
+    #toast.warning {
+      border-left-color: #ffbd2e;
+      background: rgba(255, 189, 46, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      #control-strip {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 12px;
+        gap: 10px;
+      }
+      #search-container {
+        width: 100%;
+        max-width: none;
+        order: 1;
+      }
+      #url-section {
+        order: 3;
+        width: 100%;
+        padding: 10px 0 0 0;
+        border-left: none;
+        border-right: none;
+        border-top: 1px solid var(--nexus-border);
+        margin-top: 8px;
+      }
+      #url-input {
+        flex: 1;
+      }
+      #quick-launch {
+        bottom: 12px;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+      .site-card {
+        min-width: 75px;
+        padding: 10px 8px;
+      }
+      .site-favicon {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+      }
+      .nexus-window {
+        min-width: 320px;
+      }
+      .window-title {
+        max-width: 150px;
+      }
+    }
+    
+    @media (max-width: 500px) {
+      #quick-launch {
+        gap: 6px;
+        padding: 8px 10px;
+      }
+      .site-card {
+        min-width: 65px;
+        padding: 8px 6px;
+      }
+      .fallback-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      .fallback-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Fullscreen Notice -->
+  <div id="fullscreen-notice">
+    <span>📐 To fill the entire page: Drag the edges of this embed box in Google Sites editor</span>
+    <button onclick="dismissNotice()">Got it</button>
+  </div>
+
+  <div class="bg-gradient"></div>
+
+  <!-- Boot Screen -->
+  <div id="boot-screen">
+    <div class="boot-logo">NEXUS V5</div>
+    <div class="boot-bar">
+      <div class="boot-progress" id="boot-progress"></div>
+    </div>
+  </div>
+
+  <!-- Main Desktop -->
+  <div id="nexus-desktop">
+    <!-- Control Strip -->
+    <div id="control-strip">
+      <!-- Web Search -->
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search the web..." autocomplete="off">
+        <button id="search-btn">Search</button>
+      </div>
+      
+      <!-- URL Input + Proxy Toggle -->
+      <div id="url-section">
+        <input type="text" id="url-input" placeholder="Enter URL..." value="youtube.com">
+        <button class="btn btn-toggle active" id="proxy-toggle" title="Use proxy to bypass embed blocks">🔓 Proxy</button>
+        <button class="btn btn-primary" id="navigate-btn" title="Load URL">Go</button>
+        <button class="btn btn-fullscreen" id="fullscreen-btn" title="Expand to fullscreen">⛶ Fullscreen</button>
+      </div>
+      
+      <button class="btn" id="new-window-btn" title="New Window">+ New</button>
+      <button class="btn" id="reset-btn" title="Reset Workspace">↺</button>
+    </div>
+
+    <!-- Window Container -->
+    <div id="window-container"></div>
+
+    <!-- Quick Launch Sites -->
+    <div id="quick-launch"></div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast"></div>
+
+  <script>
+    // === CONFIG ===
+    const APPROVED_SITES = [
+      { name: "YouTube", url: "https://www.youtube.com", icon: "▶️", needsProxy: false, useEmbed: true },
+      { name: "Wikipedia", url: "https://en.wikipedia.org", icon: "🌐", needsProxy: false, useEmbed: false },
+      { name: "Khan Academy", url: "https://www.khanacademy.org", icon: "🎓", needsProxy: true, useEmbed: false },
+      { name: "NASA", url: "https://www.nasa.gov", icon: "🚀", needsProxy: false, useEmbed: false },
+      { name: "National Geographic", url: "https://www.nationalgeographic.com", icon: "🌍", needsProxy: true, useEmbed: false },
+      { name: "Code.org", url: "https://code.org", icon: "💻", needsProxy: false, useEmbed: false }
+    ];
+
+    // CORS Proxies (fallback chain)
+    const PROXIES = [
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+      (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    ];
+
+    // === DOM ===
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const fullscreenNotice = $('#fullscreen-notice');
+    const bootScreen = $('#boot-screen');
+    const bootProgress = $('#boot-progress');
+    const desktop = $('#nexus-desktop');
+    const container = $('#window-container');
+    const searchInput = $('#search-input');
+    const searchBtn = $('#search-btn');
+    const urlInput = $('#url-input');
+    const proxyToggle = $('#proxy-toggle');
+    const navigateBtn = $('#navigate-btn');
+    const fullscreenBtn = $('#fullscreen-btn');
+    const newWindowBtn = $('#new-window-btn');
+    const resetBtn = $('#reset-btn');
+    const quickLaunch = $('#quick-launch');
+    const toast = $('#toast');
+
+    // === State ===
+    let windowCount = 0;
+    let highestZ = 100;
+    let activeWindow = null;
+    let isDragging = false;
+    let isResizing = false;
+    let dragOffset = { x: 0, y: 0 };
+    let resizeStart = { w: 0, h: 0, x: 0, y: 0 };
+    let useProxy = true;
+    let searchDebounce = null;
+
+    // === Dismiss Notice ===
+    function dismissNotice() {
+      fullscreenNotice.classList.add('hidden');
+      localStorage.setItem('nexus-notice-dismissed', 'true');
+    }
+    
+    // Check if notice was dismissed
+    if (localStorage.getItem('nexus-notice-dismissed') === 'true') {
+      fullscreenNotice.classList.add('hidden');
+    }
+
+    // === Boot ===
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => bootProgress.style.width = '100%', 100);
+      setTimeout(() => {
+        bootScreen.classList.add('hidden');
+        desktop.classList.add('active');
+        initQuickLaunch();
+        // Welcome window
+        createWindow('https://en.wikipedia.org/wiki/Education', 'Welcome to Nexus V5', false);
+      }, 1500);
+      
+      // Try to expand iframe if possible
+      expandIframe();
+    });
+
+    // === Try to Auto-Expand ===
+    function expandIframe() {
+      try {
+        // Try to message parent to resize (won't work cross-origin but worth trying)
+        window.parent.postMessage({
+          type: 'resize',
+          width: '100%',
+          height: '100%'
+        }, '*');
+      } catch(e) {
+        console.log('Cannot auto-expand iframe (cross-origin restriction)');
+      }
+    }
+
+    // === Fullscreen Mode ===
+    fullscreenBtn.addEventListener('click', () => {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => {
+            showToast('Fullscreen not available. Please resize the embed manually.', 'warning');
+          });
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // === Toast ===
+    function showToast(msg, type = 'success') {
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // === Quick Launch ===
+    function initQuickLaunch() {
+      quickLaunch.innerHTML = '';
+      APPROVED_SITES.forEach(site => {
+        const card = document.createElement('div');
+        card.className = 'site-card';
+        card.innerHTML = `
+          <div class="site-favicon">${site.icon}</div>
+          <div class="site-name">${site.name}</div>
+        `;
+        card.addEventListener('click', () => {
+          createWindow(site.url, site.name, site.needsProxy, site.useEmbed);
+          if (site.useEmbed) {
+            showToast(`Loading ${site.name} (optimized embed)`);
+          } else if (site.needsProxy) {
+            showToast(`Loading ${site.name} via proxy...`);
+          } else {
+            showToast(`Opened ${site.name}`);
+          }
+        });
+        quickLaunch.appendChild(card);
+      });
+    }
+
+    // === YouTube Special Handler ===
+    function getYoutubeEmbedUrl(url) {
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/,
+        /youtube\.com\/channel\/([^&\s]+)/,
+        /youtube\.com\/user\/([^&\s]+)/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+          if (match[0].includes('channel') || match[0].includes('user')) {
+            return `https://www.youtube.com/embed?listType=user_uploads&list=${match[1]}`;
+          }
+          return `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0`;
+        }
+      }
+      
+      return 'https://www.youtube.com/embed?list=RD';
+    }
+
+    // === Proxy Logic ===
+    async function fetchViaProxy(url, maxRetries = 3) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      try {
+        for (let i = 0; i < PROXIES.length; i++) {
+          try {
+            const proxyUrl = PROXIES[i](url);
+            const response = await fetch(proxyUrl, { 
+              method: 'GET',
+              headers: { 
+                'Accept': 'text/html,application/xhtml+xml',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              },
+              signal: controller.signal
+            });
+            
+            if (!response.ok) {
+              console.warn(`Proxy ${i+1} returned ${response.status}`);
+              continue;
+            }
+            
+            let html = await response.text();
+            html = stripSecurityHeaders(html);
+            html = injectBaseTag(html, url);
+            
+            return html;
+          } catch (err) {
+            console.warn(`Proxy ${i+1} failed:`, err.message);
+            if (i === PROXIES.length - 1) throw err;
+          }
+        }
+        throw new Error('All proxies failed');
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function stripSecurityHeaders(html) {
+      html = html.replace(/<meta[^>]+http-equiv=["']?Content-Security-Policy[^>]*>/gi, '');
+      html = html.replace(/<meta[^>]+http-equiv=["']?X-Frame-Options[^>]*>/gi, '');
+      html = html.replace(/<script[^>]*>[\s\S]*?if\s*\(\s*window\s*!==\s*window\.top[\s\S]*?<\/script>/gi, '');
+      html = html.replace(/<script[^>]*>[\s\S]*?top\.location[\s\S]*?<\/script>/gi, '');
+      return html;
+    }
+
+    function injectBaseTag(html, baseUrl) {
+      const baseTag = `<base href="${baseUrl}">`;
+      if (html.includes('<head>')) {
+        return html.replace('<head>', `<head>${baseTag}`);
+      }
+      if (html.includes('<html')) {
+        return html.replace('<html', `<html>${baseTag}`);
+      }
+      return baseTag + html;
+    }
+
+    function createBlobUrl(html, mimeType = 'text/html') {
+      const blob = new Blob([html], { type: mimeType });
+      return URL.createObjectURL(blob);
+    }
+
+    // === Search ===
+    async function performSearch(query) {
+      showToast(`Searching for "${query}"...`, 'info');
+      const win = createWindow('about:blank', `🔍 Search: ${query}`, true, false);
+      const body = win.querySelector('.window-body');
+      
+      body.innerHTML = `
+        <div class="proxy-loading">
+          <div class="proxy-spinner"></div>
+          <div class="proxy-status">Searching...</div>
+          <div class="proxy-substatus">Fetching results from DuckDuckGo</div>
+        </div>
+      `;
+      
+      try {
+        const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+        const html = await fetchViaProxy(searchUrl);
+        const blobUrl = createBlobUrl(html);
+        
+        body.innerHTML = `<iframe src="${blobUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" loading="lazy"></iframe>`;
+        showToast('Search results loaded');
+      } catch (err) {
+        console.error('Search error:', err);
+        showFallback(body, searchUrl, 'Search failed. Try a different query.');
+        showToast('Search failed', 'error');
+      }
+    }
+
+    searchBtn.addEventListener('click', () => {
+      const query = searchInput.value.trim();
+      if (query) {
+        performSearch(query);
+        searchInput.blur();
+      }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const query = searchInput.value.trim();
+        if (query) {
+          performSearch(query);
+          searchInput.blur();
+        }
+      }
+    });
+
+    // === Window Creation ===
+    async function createWindow(url, title = 'New Window', useProxyForThis = false, useSpecialEmbed = false) {
+      if (!url.startsWith('http')) url = 'https://' + url;
+      
+      windowCount++;
+      const win = document.createElement('div');
+      win.className = 'nexus-window';
+      win.style.zIndex = ++highestZ;
+      win.style.left = `${80 + (windowCount * 35)}px`;
+      win.style.top = `${110 + (windowCount * 35)}px`;
+      win.style.width = '800px';
+      win.style.height = '520px';
+      win.dataset.url = url;
+      win.dataset.useProxy = useProxyForThis;
+      win.dataset.useEmbed = useSpecialEmbed;
+      win.id = `win-${windowCount}`;
+
+      const hostname = new URL(url).hostname;
+      const shouldProxy = useProxyForThis || (useProxy && !APPROVED_SITES.find(s => url.includes(s.url.replace('https://','')))?.needsProxy === false);
+      const isYouTube = hostname.includes('youtube.com') || hostname.includes('youtu.be');
+
+      win.innerHTML = `
+        <div class="window-header">
+          <span class="window-title">${title}</span>
+          ${shouldProxy && !useSpecialEmbed ? '<span class="proxy-badge">PROXY</span>' : ''}
+          ${isYouTube ? '<span class="proxy-badge" style="background:rgba(255,0,0,0.2);color:#ff4d6d">YT</span>' : ''}
+          <div class="window-controls">
+            ${!isYouTube ? `<button class="win-btn win-proxy" title="Toggle proxy" data-action="toggle-proxy">${shouldProxy ? '🔓' : '🔒'}</button>` : ''}
+            <button class="win-btn win-min" title="Minimize">─</button>
+            <button class="win-btn win-close" title="Close">✕</button>
+          </div>
+        </div>
+        <div class="window-body">
+          <div class="proxy-loading" id="loading-${windowCount}">
+            <div class="proxy-spinner"></div>
+            <div class="proxy-status">Loading ${hostname}...</div>
+            <div class="proxy-substatus">${useSpecialEmbed ? 'Optimized embed mode' : shouldProxy ? 'Via CORS proxy' : 'Direct embed'}</div>
+          </div>
+        </div>
+        <div class="resize-handle"></div>
+      `;
+
+      container.appendChild(win);
+      
+      // Load content
+      if (isYouTube && useSpecialEmbed) {
+        loadYouTubeEmbed(win, url);
+      } else {
+        loadWindowContent(win, url, title, shouldProxy);
+      }
+      
+      setupWindowEvents(win, url, title, shouldProxy, isYouTube);
+      focusWindow(win);
+      return win;
+    }
+
+    function loadYouTubeEmbed(win, url) {
+      const body = win.querySelector('.window-body');
+      const loadingEl = win.querySelector('.proxy-loading');
+      const embedUrl = getYoutubeEmbedUrl(url);
+      
+      const iframe = document.createElement('iframe');
+      iframe.src = embedUrl;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.background = '#000';
+      
+      iframe.onload = () => {
+        if (loadingEl) loadingEl.style.display = 'none';
+      };
+      
+      iframe.onerror = () => {
+        if (loadingEl) loadingEl.style.display = 'none';
+        showFallback(body, url, 'YouTube embed failed');
+      };
+      
+      setTimeout(() => {
+        if (loadingEl && loadingEl.style.display !== 'none') {
+          loadingEl.style.display = 'none';
+        }
+      }, 3000);
+      
+      body.appendChild(iframe);
+    }
+
+    async function loadWindowContent(win, url, title, shouldProxy) {
+      const body = win.querySelector('.window-body');
+      const loadingEl = win.querySelector('.proxy-loading');
+      
+      try {
+        let blobUrl;
+        
+        if (shouldProxy) {
+          blobUrl = await fetchViaProxy(url);
+          blobUrl = createBlobUrl(blobUrl);
+        } else {
+          blobUrl = url;
+        }
+        
+        const iframe = document.createElement('iframe');
+        iframe.src = blobUrl;
+        iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-pointer-lock';
+        iframe.loading = 'lazy';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        
+        iframe.onload = () => {
+          if (loadingEl) loadingEl.style.display = 'none';
+        };
+        
+        iframe.onerror = () => {
+          if (loadingEl) loadingEl.style.display = 'none';
+          showFallback(body, url, 'Failed to load content');
+        };
+        
+        setTimeout(() => {
+          if (loadingEl && loadingEl.style.display !== 'none') {
+            showFallback(body, url, 'Loading timed out. Site may block embedding.');
+          }
+        }, 12000);
+        
+        body.appendChild(iframe);
+        
+      } catch (err) {
+        console.error('Load error:', err);
+        if (loadingEl) loadingEl.style.display = 'none';
+        showFallback(body, url, `Error: ${err.message}`);
+        showToast('Failed to load page', 'error');
+      }
+    }
+
+    function showFallback(container, url, message) {
+      const hostname = new URL(url).hostname;
+      const isYouTube = hostname.includes('youtube.com');
+      
+      container.innerHTML = `
+        <div class="window-fallback">
+          <div class="fallback-icon">⚠️</div>
+          <div class="fallback-title">Could Not Load</div>
+          <div class="fallback-text">
+            ${message}<br><br>
+            <small>${hostname} may block embedding or have strict security.</small>
+          </div>
+          <div class="fallback-actions">
+            ${isYouTube ? `
+              <button class="fallback-btn primary" data-action="youtube-embed">▶️ Try YouTube Embed</button>
+            ` : ''}
+            <button class="fallback-btn" data-action="retry-proxy">🔄 Retry With Proxy</button>
+            <button class="fallback-btn" data-action="retry-direct">📡 Try Direct</button>
+          </div>
+        </div>
+      `;
+      
+      container.querySelector('[data-action="retry-direct"]').addEventListener('click', () => {
+        container.innerHTML = '';
+        loadWindowContent(container.closest('.nexus-window'), url, 'Loading...', false);
+      });
+      
+      container.querySelector('[data-action="retry-proxy"]').addEventListener('click', () => {
+        container.innerHTML = '';
+        loadWindowContent(container.closest('.nexus-window'), url, 'Loading...', true);
+      });
+      
+      if (isYouTube) {
+        container.querySelector('[data-action="youtube-embed"]').addEventListener('click', () => {
+          container.innerHTML = '';
+          loadYouTubeEmbed(container.closest('.nexus-window'), url);
+        });
+      }
+    }
+
+    // === Window Events ===
+    function setupWindowEvents(win, url, title, shouldProxy, isYouTube) {
+      const header = win.querySelector('.window-header');
+      const closeBtn = win.querySelector('.win-close');
+      const minBtn = win.querySelector('.win-min');
+      const proxyBtn = win.querySelector('[data-action="toggle-proxy"]');
+      const resizeHandle = win.querySelector('.resize-handle');
+
+      win.addEventListener('mousedown', () => focusWindow(win));
+
+      header.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.win-btn')) return;
+        isDragging = true;
+        activeWindow = win;
+        const rect = win.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        win.style.transition = 'none';
+        e.preventDefault();
+      });
+
+      resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        activeWindow = win;
+        const rect = win.getBoundingClientRect();
+        resizeStart = { w: rect.width, h: rect.height, x: e.clientX, y: e.clientY };
+        win.style.transition = 'none';
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      closeBtn.addEventListener('click', () => {
+        win.style.opacity = '0';
+        win.style.transform = 'scale(0.92)';
+        setTimeout(() => win.remove(), 200);
+      });
+
+      minBtn.addEventListener('click', () => {
+        win.classList.toggle('minimized');
+        if (!win.classList.contains('minimized')) focusWindow(win);
+      });
+
+      if (proxyBtn && !isYouTube) {
+        proxyBtn.addEventListener('click', () => {
+          const newProxyState = win.dataset.useProxy !== 'true';
+          win.dataset.useProxy = newProxyState;
+          proxyBtn.textContent = newProxyState ? '🔓' : '🔒';
+          
+          const body = win.querySelector('.window-body');
+          body.innerHTML = `
+            <div class="proxy-loading">
+              <div class="proxy-spinner"></div>
+              <div class="proxy-status">Reloading...</div>
+              <div class="proxy-substatus">${newProxyState ? 'Via proxy' : 'Direct'}</div>
+            </div>
+          `;
+          loadWindowContent(win, url, title, newProxyState);
+          showToast(newProxyState ? 'Proxy enabled' : 'Proxy disabled', 'info');
+        });
+      }
+    }
+
+    function focusWindow(win) {
+      $$('.nexus-window').forEach(w => w.style.zIndex = highestZ - 1);
+      win.style.zIndex = ++highestZ;
+      activeWindow = win;
+    }
+
+    // === Global Mouse Handlers ===
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging && activeWindow) {
+        const x = e.clientX - dragOffset.x;
+        const y = e.clientY - dragOffset.y;
+        activeWindow.style.left = `${Math.max(0, x)}px`;
+        activeWindow.style.top = `${Math.max(60, y)}px`;
+      }
+      if (isResizing && activeWindow) {
+        const dx = e.clientX - resizeStart.x;
+        const dy = e.clientY - resizeStart.y;
+        const newW = Math.max(400, resizeStart.w + dx);
+        const newH = Math.max(300, resizeStart.h + dy);
+        activeWindow.style.width = `${newW}px`;
+        activeWindow.style.height = `${newH}px`;
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging || isResizing) {
+        if (activeWindow) activeWindow.style.transition = '';
+        isDragging = false;
+        isResizing = false;
+      }
+    });
+
+    // === Control Events ===
+    proxyToggle.addEventListener('click', () => {
+      useProxy = !useProxy;
+      proxyToggle.classList.toggle('active', useProxy);
+      proxyToggle.textContent = useProxy ? '🔓 Proxy' : '🔒 Direct';
+      showToast(useProxy ? 'Proxy mode: ON (for blocked sites)' : 'Proxy mode: OFF (direct embed)', 'info');
+    });
+
+    navigateBtn.addEventListener('click', () => {
+      let url = urlInput.value.trim();
+      if (!url) return;
+      if (!url.startsWith('http')) url = 'https://' + url;
+      
+      if (!url.includes('.') || url.length < 6) {
+        performSearch(url);
+      } else {
+        const site = APPROVED_SITES.find(s => url.includes(s.url.replace('https://','')));
+        const needsProxy = site?.needsProxy ?? useProxy;
+        const useEmbed = site?.useEmbed ?? false;
+        createWindow(url, new URL(url).hostname, needsProxy, useEmbed);
+      }
+      urlInput.blur();
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') navigateBtn.click();
+    });
+
+    newWindowBtn.addEventListener('click', () => {
+      createWindow('https://en.wikipedia.org/wiki/Main_Page', 'New Window', false, false);
+      showToast('New window created');
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Close all windows and reset workspace?')) {
+        container.innerHTML = '';
+        windowCount = 0;
+        createWindow('https://en.wikipedia.org/wiki/Education', 'Welcome to Nexus V5', false, false);
+        showToast('Workspace reset');
+      }
+    });
+
+    // === Keyboard Shortcuts ===
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+      
+      switch(e.key.toLowerCase()) {
+        case 'n': e.preventDefault(); newWindowBtn.click(); break;
+        case 'r': e.preventDefault(); resetBtn.click(); break;
+        case '/': e.preventDefault(); searchInput.focus(); searchInput.select(); break;
+        case 'p': e.preventDefault(); proxyToggle.click(); break;
+        case 'f': e.preventDefault(); fullscreenBtn.click(); break;
+        case 'escape':
+          if (activeWindow) activeWindow.classList.toggle('minimized');
+          break;
+      }
+    });
+
+    console.log('🎓 Nexus V5 loaded | Full-screen mode active');
+    console.log('✅ Press F for fullscreen | Drag embed edges in Google Sites to fill page');
+  </script>
+</body>
+</html>
