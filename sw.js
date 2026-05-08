@@ -1,4 +1,7 @@
-// sw.js - Advanced request interception for network proxy bypass
+// Crown Browser — Service Worker
+// Intercepts navigation requests and routes through proxy chain
+
+const CACHE_NAME = 'crown-v3';
 const PROXY_CHAIN = [
   'https://api.allorigins.win/raw?url=',
   'https://corsproxy.io/?',
@@ -6,40 +9,57 @@ const PROXY_CHAIN = [
   'https://thingproxy.freeboard.io/fetch/'
 ];
 
-self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-  
-  // Skip our own files and non-network requests
-  if (url.includes(self.location.origin) || url.startsWith('blob:')) return;
-  
-  // Only intercept navigation and resource requests
-  if (event.request.mode !== 'navigate' && !/\.(html?|css|js|png|jpg|gif|svg|webp|woff2?|ttf|eot|mp4|webm|mp3)/i.test(url)) {
-    return;
-  }
-  
-  event.respondWith((async () => {
-    // Try proxy chain
-    for (const base of PROXY_CHAIN) {
-      try {
-        const proxyUrl = base + encodeURIComponent(url);
-        const response = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: { 
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          cache: 'no-store'
-        });
-        if (response.ok) return response;
-      } catch (e) {
-        continue;
-      }
-    }
-    // Fallback to direct fetch
-    return fetch(event.request);
-  })());
+// Cache the app shell on install
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.addAll(['./index.html', './manifest.json'])
+    )
+  );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+self.addEventListener('activate', event => {
+  // Clear old caches
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', event => {
+  const url = event.request.url;
+
+  // Always serve own files from cache
+  if (url.includes(self.location.origin)) {
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request))
+    );
+    return;
+  }
+
+  // Skip blob/data URLs and non-navigation requests
+  if (url.startsWith('blob:') || url.startsWith('data:')) return;
+  if (event.request.mode !== 'navigate') return;
+
+  // Proxy navigation requests
+  event.respondWith(
+    (async () => {
+      for (const base of PROXY_CHAIN) {
+        try {
+          const proxyUrl = base + encodeURIComponent(url);
+          const res = await fetch(proxyUrl, {
+            headers: { 'Accept': 'text/html,application/xhtml+xml,*/*' },
+            cache: 'no-store',
+            signal: AbortSignal.timeout(8000)
+          });
+          if (res.ok) return res;
+        } catch { continue; }
+      }
+      // Final fallback: direct
+      return fetch(event.request);
+    })()
+  );
 });

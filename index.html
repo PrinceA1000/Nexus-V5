@@ -1,750 +1,936 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crown Browser</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ==============================
+       RESET & VARIABLES
+    ============================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0f;
-      --panel: #12121a;
-      --glass: rgba(18, 18, 26, 0.9);
-      --neon: #00d4ff;
-      --purple: #8b5cf6;
-      --green: #10b981;
-      --red: #ef4444;
-      --border: rgba(139, 92, 246, 0.2);
-      --text: #f1f5f9;
-      --text-dim: rgba(241, 245, 249, 0.5);
-      --radius: 8px;
-      --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      --bg:       #06060f;
+      --bg2:      #0c0c1e;
+      --panel:    rgba(12,12,30,0.97);
+      --border:   rgba(0,240,210,0.1);
+      --bh:       rgba(0,240,210,0.35);
+      --cyan:     #00f0d2;
+      --purple:   #7c3aed;
+      --pink:     #f72585;
+      --green:    #06d6a0;
+      --red:      #ef4444;
+      --text:     #dde8f0;
+      --dim:      rgba(221,232,240,0.4);
+      --muted:    rgba(221,232,240,0.2);
+      --glow:     0 0 20px rgba(0,240,210,0.25);
+      --topH:     46px;
+      --tabH:     34px;
+      --r:        7px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%; width: 100%;
-      background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', system-ui, sans-serif;
       overflow: hidden;
+      user-select: none;
     }
-    
+
+    /* ==============================
+       BOOT
+    ============================== */
     #boot {
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg);
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 0.4s;
+      align-items: center; justify-content: center; gap: 4px;
     }
-    #boot.hidden { opacity: 0; pointer-events: none; }
-    .boot-logo {
-      font-size: 1.8rem; font-weight: 800; letter-spacing: 3px;
-      background: linear-gradient(135deg, var(--neon), var(--purple));
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-      margin-bottom: 0.5rem;
-    }
-    .boot-sub { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.5rem; }
-    .boot-bar {
-      width: 200px; height: 3px;
-      background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
-    }
-    .boot-progress {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, var(--neon), var(--purple));
-      transition: width 1s ease;
-    }
+    #boot.out { animation: bootOut 0.45s forwards; }
+    @keyframes bootOut { to { opacity: 0; pointer-events: none; } }
 
-    #app {
-      position: fixed; inset: 0;
-      display: none; flex-direction: column;
-      z-index: 1;
+    .b-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2.6rem; font-weight: 700; letter-spacing: 8px;
+      color: var(--cyan);
+      text-shadow: 0 0 30px var(--cyan), 0 0 70px rgba(0,240,210,0.25);
+      animation: logoGlow 1.8s ease-in-out infinite;
     }
-    #app.active { display: flex; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes logoGlow {
+      0%,100% { text-shadow: 0 0 20px var(--cyan), 0 0 50px rgba(0,240,210,0.2); }
+      50%      { text-shadow: 0 0 50px var(--cyan), 0 0 100px rgba(0,240,210,0.35); }
+    }
+    .b-sub { font-size: 0.65rem; letter-spacing: 3px; color: var(--dim); margin-bottom: 22px; }
+    .b-track { width: 160px; height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden; }
+    .b-fill  { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--purple)); border-radius: 1px; transition: width 0.75s cubic-bezier(.4,0,.2,1); }
 
+    /* ==============================
+       APP SHELL
+    ============================== */
+    #app { position: fixed; inset: 0; display: none; flex-direction: column; }
+    #app.on { display: flex; }
+
+    /* ==============================
+       TOP BAR
+    ============================== */
     #topbar {
-      height: 48px; display: flex; align-items: center;
-      padding: 0 10px; gap: 6px;
-      background: var(--glass); backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border); z-index: 10;
+      height: var(--topH); flex-shrink: 0;
+      display: flex; align-items: center; gap: 5px; padding: 0 8px;
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px); position: relative; z-index: 200;
     }
-    .nav-btn {
-      width: 28px; height: 28px; border-radius: 6px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.05);
-      color: var(--text); cursor: pointer;
-      display: grid; place-items: center; font-size: 12px;
-      transition: all 0.15s;
+    /* scanline texture */
+    #topbar::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
     }
-    .nav-btn:hover:not(:disabled) {
-      background: rgba(139,92,246,0.15);
-      border-color: var(--neon); transform: translateY(-1px);
-    }
-    .nav-btn:disabled { opacity: 0.3; cursor: default; }
-    
-    .address-box { flex: 1; position: relative; }
-    #url-input {
-      width: 100%; height: 30px;
-      padding: 0 32px 0 10px;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text);
-      font-size: 12px; outline: none;
-      transition: border-color 0.2s;
-    }
-    #url-input:focus { border-color: var(--neon); }
-    #url-input::placeholder { color: var(--text-dim); }
-    .url-icon {
-      position: absolute; right: 10px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-dim); font-size: 12px;
-      pointer-events: none;
-    }
-    
-    .mode-btn {
-      padding: 5px 8px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text);
-      cursor: pointer; font-size: 11px; font-weight: 600;
-      display: flex; align-items: center; gap: 4px;
-      transition: all 0.2s;
-    }
-    .mode-btn.active {
-      background: linear-gradient(135deg, var(--purple), var(--neon));
-      border: none; color: white;
-      box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
-    }
-    .status-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 4px currentColor;
-    }
-    .status-dot.error { background: var(--red); }
 
-    #viewport {
-      flex: 1; position: relative;
-      background: #000; overflow: hidden;
+    .logo {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.05rem; font-weight: 700;
+      letter-spacing: 3px; color: var(--cyan);
+      text-shadow: 0 0 10px rgba(0,240,210,0.4);
+      flex-shrink: 0; padding-right: 2px;
     }
-    #main-frame {
-      width: 100%; height: 100%;
-      border: none; background: #fff;
+    .sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; }
+
+    .ico {
+      width: 30px; height: 30px; flex-shrink: 0;
+      display: grid; place-items: center;
+      background: transparent; border: 1px solid transparent; border-radius: var(--r);
+      color: var(--dim); cursor: pointer; font-size: 14px;
+      transition: all .15s;
     }
-    
-    .overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, var(--panel), var(--bg));
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center; padding: 20px; z-index: 5;
-      transition: opacity 0.2s;
+    .ico:hover:not(:disabled) { background: rgba(0,240,210,0.07); border-color: var(--bh); color: var(--cyan); }
+    .ico:disabled { opacity: .22; cursor: not-allowed; }
+
+    /* Address bar */
+    .addr { flex: 1; position: relative; min-width: 0; }
+    #url {
+      width: 100%; height: 31px; padding: 0 32px 0 11px;
+      background: rgba(0,0,0,0.38); border: 1px solid var(--border); border-radius: var(--r);
+      color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+      outline: none; transition: border-color .2s, box-shadow .2s;
     }
-    .overlay.hidden { opacity: 0; pointer-events: none; }
-    
-    .loading-spinner {
-      width: 36px; height: 36px;
-      border: 2px solid rgba(0,212,255,0.2);
-      border-top-color: var(--neon);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
+    #url:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,240,210,0.1); }
+    #url::placeholder { color: var(--muted); }
+    .addr-ic { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 11px; pointer-events: none; }
+
+    /* Right-side buttons */
+    .rgroup { display: flex; gap: 3px; flex-shrink: 0; align-items: center; }
+
+    .pbtn {
+      height: 27px; padding: 0 9px;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--dim); cursor: pointer; font-size: 10.5px; font-weight: 700; letter-spacing: .5px;
+      transition: all .2s; flex-shrink: 0;
+    }
+    .pbtn.on { background: rgba(0,240,210,0.09); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px rgba(0,240,210,0.12); }
+    .pdot { width: 5px; height: 5px; border-radius: 50%; background: var(--dim); transition: .2s; }
+    .pbtn.on .pdot { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+
+    /* ==============================
+       TAB BAR
+    ============================== */
+    #tabs {
+      height: var(--tabH); flex-shrink: 0;
+      display: flex; align-items: center; gap: 3px; padding: 0 8px;
+      background: rgba(6,6,15,0.85); border-bottom: 1px solid var(--border);
+      overflow-x: auto; overflow-y: hidden;
+    }
+    #tabs::-webkit-scrollbar { height: 2px; }
+    #tabs::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .tab {
+      height: 25px; min-width: 75px; max-width: 155px;
+      display: flex; align-items: center; gap: 5px; padding: 0 7px 0 9px;
+      background: rgba(255,255,255,0.02); border: 1px solid transparent; border-radius: 5px;
+      cursor: pointer; font-size: 11px; font-weight: 600; color: var(--dim);
+      transition: all .13s; flex-shrink: 0; user-select: none;
+    }
+    .tab:hover:not(.act) { background: rgba(0,240,210,0.04); color: var(--text); }
+    .tab.act { background: rgba(0,240,210,0.09); border-color: rgba(0,240,210,0.28); color: var(--cyan); }
+    .tab-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .tab-x { width: 13px; height: 13px; display: grid; place-items: center; border-radius: 3px; font-size: 9px; color: var(--dim); flex-shrink: 0; transition: .1s; }
+    .tab-x:hover { background: rgba(239,68,68,0.2); color: var(--red); }
+
+    .newtab {
+      width: 23px; height: 23px; flex-shrink: 0;
+      display: grid; place-items: center;
+      background: transparent; border: 1px solid var(--border); border-radius: 5px;
+      color: var(--dim); cursor: pointer; font-size: 15px;
+      transition: all .13s;
+    }
+    .newtab:hover { background: rgba(0,240,210,0.07); color: var(--cyan); border-color: var(--bh); }
+
+    /* ==============================
+       VIEWPORT
+    ============================== */
+    #vp { flex: 1; position: relative; background: #000; overflow: hidden; }
+    #frame {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+    }
+
+    /* ==============================
+       OVERLAYS
+    ============================== */
+    .ov {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 28px;
+      transition: opacity .2s;
+    }
+    .ov.hide { opacity: 0; pointer-events: none; }
+
+    /* Home */
+    #ov-home {
+      background: var(--bg);
+      background-image:
+        linear-gradient(rgba(0,240,210,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,210,0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    .h-logo {
+      font-family: 'Rajdhani', sans-serif; font-size: 3.2rem; font-weight: 700;
+      letter-spacing: 8px; color: var(--cyan);
+      text-shadow: 0 0 40px rgba(0,240,210,0.35);
+    }
+    .h-sub { font-size: 0.65rem; letter-spacing: 3px; color: var(--dim); margin-bottom: 28px; }
+    .h-row { display: flex; gap: 7px; width: min(480px, 90%); margin-bottom: 28px; }
+    .h-input {
+      flex: 1; height: 42px; padding: 0 15px;
+      background: rgba(0,0,0,0.45); border: 1px solid var(--border); border-radius: var(--r);
+      color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .h-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,240,210,0.1); }
+    .h-input::placeholder { color: var(--muted); }
+    .h-go {
+      height: 42px; padding: 0 18px; border: none; border-radius: var(--r);
+      background: var(--cyan); color: #000; font-weight: 700; font-size: 13px;
+      cursor: pointer; transition: filter .15s;
+    }
+    .h-go:hover { filter: brightness(1.1); }
+
+    .quickgrid {
+      display: grid; grid-template-columns: repeat(4, 82px); gap: 10px;
+    }
+    .qtile {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 13px 8px;
+      background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 10px;
+      cursor: pointer; font-size: 11px; color: var(--dim); transition: all .18s;
+    }
+    .qtile:hover { border-color: var(--cyan); background: rgba(0,240,210,0.055); color: var(--cyan); transform: translateY(-2px); }
+    .qtile .qi { font-size: 21px; }
+
+    /* Loading */
+    #ov-load { background: var(--bg); }
+    .spin {
+      width: 38px; height: 38px; margin-bottom: 14px;
+      border: 2px solid rgba(0,240,210,0.13); border-top-color: var(--cyan);
+      border-radius: 50%; animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
-    .overlay-title {
-      font-size: 15px; font-weight: 700;
-      color: var(--neon); margin-bottom: 6px;
-    }
-    .overlay-text {
-      font-size: 12px; color: var(--text-dim);
-      max-width: 300px; line-height: 1.4;
-      margin-bottom: 12px;
-    }
-    .action-btn {
-      padding: 7px 14px; background: var(--neon);
-      border: none; border-radius: 6px;
-      color: #000; font-weight: 600;
-      cursor: pointer; transition: filter 0.2s;
-      font-size: 12px;
-    }
-    .action-btn:hover { filter: brightness(1.1); }
-    .action-btn.secondary {
-      background: rgba(255,255,255,0.06);
-      color: var(--text); border: 1px solid var(--border);
-    }
-    .action-btn.secondary:hover {
-      background: rgba(139,92,246,0.12);
-    }
-    .quick-links {
-      display: flex; gap: 6px; flex-wrap: wrap;
-      justify-content: center; margin-top: 8px;
-    }
-    .quick-link {
-      padding: 4px 10px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 5px; color: var(--text);
-      cursor: pointer; font-size: 11px;
-      transition: all 0.15s;
-    }
-    .quick-link:hover {
-      border-color: var(--neon);
-      background: rgba(0,212,255,0.08);
-    }
+    .l-title { font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 5px; }
+    .l-sub   { font-size: 11.5px; color: var(--dim); max-width: 300px; }
 
+    /* Error */
+    #ov-err { background: var(--bg); }
+    .e-ico  { font-size: 38px; margin-bottom: 12px; }
+    .e-ttl  { font-size: 16px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+    .e-msg  { font-size: 12px; color: var(--dim); max-width: 340px; line-height: 1.55; margin-bottom: 18px; }
+    .e-row  { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+    .btn {
+      height: 34px; padding: 0 15px; border-radius: var(--r); border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px; transition: all .15s;
+    }
+    .btn-c { background: var(--cyan); color: #000; }
+    .btn-c:hover { filter: brightness(1.1); }
+    .btn-g { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); }
+    .btn-g:hover { border-color: var(--bh); background: rgba(0,240,210,0.06); }
+
+    /* ==============================
+       SIDEBAR
+    ============================== */
     #sidebar {
-      position: absolute; top: 48px; right: 0; bottom: 0;
-      width: 240px;
-      background: var(--glass); backdrop-filter: blur(10px);
-      border-left: 1px solid var(--border);
-      transform: translateX(100%);
-      transition: transform 0.25s ease;
-      z-index: 20; display: flex; flex-direction: column;
+      position: absolute; top: 0; right: 0; bottom: 0; width: 265px;
+      background: var(--panel); border-left: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      transform: translateX(100%); transition: transform .25s cubic-bezier(.4,0,.2,1);
+      z-index: 100; display: flex; flex-direction: column;
     }
     #sidebar.open { transform: translateX(0); }
-    
-    .sidebar-header {
-      padding: 12px; border-bottom: 1px solid var(--border);
-      font-weight: 700; display: flex;
-      justify-content: space-between; align-items: center;
-      font-size: 12px;
-    }
-    .sidebar-close {
-      background: none; border: none;
-      color: var(--text); cursor: pointer;
-      font-size: 16px; padding: 0 4px;
-    }
-    .sidebar-content {
-      flex: 1; overflow-y: auto; padding: 10px;
-    }
-    .sidebar-content::-webkit-scrollbar { width: 4px; }
-    .sidebar-content::-webkit-scrollbar-thumb {
-      background: var(--border); border-radius: 2px;
-    }
-    .list-item {
-      padding: 10px; margin-bottom: 8px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 6px; cursor: pointer;
-      transition: 0.15s;
-    }
-    .list-item:hover {
-      border-color: var(--neon);
-      background: rgba(0,212,255,0.06);
-    }
-    .item-title {
-      font-size: 12px; font-weight: 600;
-      overflow: hidden; text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .item-url {
-      font-size: 10px; color: var(--text-dim);
-      margin-top: 2px; overflow: hidden;
-      text-overflow: ellipsis; white-space: nowrap;
-    }
-    .item-actions {
-      display: flex; gap: 5px; margin-top: 5px;
-    }
-    .item-btn {
-      padding: 3px 7px;
-      background: rgba(255,255,255,0.05);
-      border: none; border-radius: 4px;
-      color: var(--text); cursor: pointer;
-      font-size: 10px; transition: 0.15s;
-    }
-    .item-btn:hover {
-      background: var(--neon); color: #000;
-    }
-    .empty-state {
-      text-align: center; padding: 24px;
-      color: var(--text-dim); font-size: 11px;
-    }
 
+    .sb-hdr {
+      display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; position: relative; padding-top: 2px;
+    }
+    .sb-tab {
+      flex: 1; height: 40px; display: grid; place-items: center;
+      font-size: 10.5px; font-weight: 700; letter-spacing: .5px;
+      color: var(--dim); cursor: pointer; border: none; background: none;
+      transition: color .15s; border-bottom: 2px solid transparent;
+    }
+    .sb-tab:hover { color: var(--text); }
+    .sb-tab.act { color: var(--cyan); border-bottom-color: var(--cyan); }
+    .sb-x {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: 22px; display: grid; place-items: center;
+      background: none; border: none; color: var(--dim); cursor: pointer;
+      font-size: 14px; border-radius: 4px; transition: .13s;
+    }
+    .sb-x:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .sb-pane { flex: 1; overflow-y: auto; padding: 10px; display: none; }
+    .sb-pane.act { display: block; }
+    .sb-pane::-webkit-scrollbar { width: 3px; }
+    .sb-pane::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .sb-add {
+      display: block; width: 100%; height: 32px; margin-bottom: 10px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--r);
+      color: var(--dim); font-size: 11px; font-weight: 700; cursor: pointer;
+      transition: all .15s; letter-spacing: .5px;
+    }
+    .sb-add:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,240,210,0.06); }
+
+    .si {
+      padding: 9px 10px; margin-bottom: 5px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--r);
+      transition: all .13s; cursor: pointer;
+    }
+    .si:hover { border-color: var(--bh); background: rgba(0,240,210,0.045); }
+    .si-ttl { font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .si-url { font-size: 10px; color: var(--dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+    .si-row { display: flex; gap: 4px; margin-top: 6px; }
+    .sm {
+      height: 20px; padding: 0 7px; font-size: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--dim); cursor: pointer; transition: .1s;
+    }
+    .sm:hover { background: var(--cyan); color: #000; border-color: transparent; }
+    .empty { text-align: center; padding: 30px 16px; color: var(--dim); font-size: 12px; }
+
+    /* ==============================
+       TOAST
+    ============================== */
     #toast {
-      position: fixed; bottom: 12px; left: 50%;
-      transform: translateX(-50%) translateY(60px);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--neon);
-      padding: 8px 14px; border-radius: 6px;
-      opacity: 0; transition: all 0.25s;
-      z-index: 2000; font-size: 12px;
-      box-shadow: var(--shadow); pointer-events: none;
+      position: fixed; bottom: 14px; left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 16px; font-size: 12px; font-weight: 600;
+      opacity: 0; transition: all .22s; z-index: 9999;
+      pointer-events: none; white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    #toast.show {
-      opacity: 1; transform: translateX(-50%) translateY(0);
-    }
-    #toast.success { border-left-color: var(--green); }
-    #toast.error { border-left-color: var(--red); }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok   { border-color: var(--green); color: var(--green); }
+    #toast.err  { border-color: var(--red); color: var(--red); }
+    #toast.inf  { border-color: var(--cyan); color: var(--cyan); }
 
-    @media (max-width: 700px) {
+    /* ==============================
+       RESPONSIVE
+    ============================== */
+    @media (max-width: 580px) {
+      .logo, .sep { display: none; }
       #sidebar { width: 100%; }
-      .mode-btn span { display: none; }
-      .quick-links { gap: 4px; }
-      .quick-link { padding: 3px 8px; font-size: 10px; }
+      .quickgrid { grid-template-columns: repeat(3, 76px); }
+      .pbtn span { display: none; }
     }
   </style>
 </head>
 <body>
-  <div id="boot">
-    <div class="boot-logo">CROWN BROWSER</div>
-    <div class="boot-sub">Fixed: YouTube + Cloak Working</div>
-    <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
-  </div>
 
-  <div id="app">
-    <div id="topbar">
-      <button class="nav-btn" id="back-btn" title="Back" disabled>←</button>
-      <button class="nav-btn" id="fwd-btn" title="Forward" disabled>→</button>
-      <button class="nav-btn" id="reload-btn" title="Reload">↻</button>
-      <button class="nav-btn" id="home-btn" title="Home">⌂</button>
-      
-      <div class="address-box">
-        <input type="text" id="url-input" placeholder="Enter URL or search..." spellcheck="false" autocomplete="off" />
-        <span class="url-icon">🔍</span>
-      </div>
-      
-      <button class="mode-btn" id="mode-btn" title="Toggle Proxy Mode">
-        <span>🛡️</span>
-        <div class="status-dot" id="status-dot"></div>
+<!-- ===== BOOT ===== -->
+<div id="boot">
+  <div class="b-logo">CROWN</div>
+  <div class="b-sub">BROWSER · v3.0</div>
+  <div class="b-track"><div class="b-fill" id="bfill"></div></div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span class="logo">⬡ CROWN</span>
+    <div class="sep"></div>
+    <button class="ico" id="btn-back" disabled title="Back">&#8592;</button>
+    <button class="ico" id="btn-fwd"  disabled title="Forward">&#8594;</button>
+    <button class="ico" id="btn-rl"          title="Reload">&#8635;</button>
+    <button class="ico" id="btn-home"        title="Home">⌂</button>
+
+    <div class="addr">
+      <input id="url" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off">
+      <span class="addr-ic">🔍</span>
+    </div>
+
+    <div class="rgroup">
+      <button class="pbtn on" id="btn-proxy" title="Toggle Proxy">
+        <div class="pdot"></div><span>PROXY</span>
       </button>
-      
-      <button class="nav-btn" id="sidebar-btn" title="History">☰</button>
-      <button class="nav-btn" id="cloak-btn" title="Open in about:blank">🎭</button>
+      <button class="ico" id="btn-theater" title="Theater Mode (F11)">⛶</button>
+      <button class="ico" id="btn-bm"      title="Bookmark Page">♡</button>
+      <button class="ico" id="btn-cloak"   title="Cloak (about:blank)">🎭</button>
+      <button class="ico" id="btn-sb"      title="History & Bookmarks">☰</button>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div id="tabs">
+    <!-- rendered by JS -->
+    <button class="newtab" id="btn-newtab" title="New Tab">+</button>
+  </div>
+
+  <!-- VIEWPORT -->
+  <div id="vp">
+    <iframe id="frame"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-downloads"
+      allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
+      allowfullscreen>
+    </iframe>
+
+    <!-- HOME -->
+    <div class="ov" id="ov-home">
+      <div class="h-logo">CROWN</div>
+      <div class="h-sub">YOUR BROWSER · YOUR RULES</div>
+      <div class="h-row">
+        <input class="h-input" id="h-url" placeholder="Search Google or enter a URL…">
+        <button class="h-go" id="h-go">Go</button>
+      </div>
+      <div class="quickgrid">
+        <div class="qtile" data-url="https://youtube.com">        <span class="qi">▶️</span>YouTube</div>
+        <div class="qtile" data-url="https://www.google.com">     <span class="qi">🔍</span>Google</div>
+        <div class="qtile" data-url="https://wikipedia.org">      <span class="qi">📖</span>Wiki</div>
+        <div class="qtile" data-url="https://github.com">         <span class="qi">🐙</span>GitHub</div>
+        <div class="qtile" data-url="https://twitch.tv">          <span class="qi">🎮</span>Twitch</div>
+        <div class="qtile" data-url="https://reddit.com">         <span class="qi">🤖</span>Reddit</div>
+        <div class="qtile" data-url="https://discord.com/app">    <span class="qi">💬</span>Discord</div>
+        <div class="qtile" data-url="https://open.spotify.com">   <span class="qi">🎵</span>Spotify</div>
+      </div>
     </div>
 
-    <div id="viewport">
-      <iframe id="main-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation allow-pointer-lock" allowfullscreen></iframe>
-      
-      <div class="overlay" id="home-overlay">
-        <div style="font-size: 32px; margin-bottom: 8px;">🌐</div>
-        <div class="overlay-title">Crown Browser</div>
-        <div class="overlay-text">YouTube fixed + about:blank cloak working. Paste any URL above.</div>
-        <div class="quick-links">
-          <button class="quick-link" data-url="https://youtube.com">YouTube</button>
-          <button class="quick-link" data-url="https://wikipedia.org">Wikipedia</button>
-          <button class="quick-link" data-url="https://google.com">Google</button>
-          <button class="quick-link" data-url="https://github.com">GitHub</button>
-        </div>
-      </div>
-
-      <div class="overlay hidden" id="loading-overlay">
-        <div class="loading-spinner"></div>
-        <div class="overlay-title">Loading...</div>
-        <div class="overlay-text" id="loading-text">Connecting...</div>
-      </div>
-
-      <div class="overlay hidden" id="error-overlay">
-        <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
-        <div class="overlay-title">Page Unavailable</div>
-        <div class="overlay-text" id="error-text">This page could not be loaded.</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
-          <button class="action-btn" id="retry-proxy-btn">🔄 Retry</button>
-          <button class="action-btn secondary" id="open-external-btn">↗ Open Externally</button>
-        </div>
-      </div>
+    <!-- LOADING -->
+    <div class="ov hide" id="ov-load">
+      <div class="spin"></div>
+      <div class="l-title">Loading</div>
+      <div class="l-sub" id="l-sub">Connecting…</div>
     </div>
 
-    <div id="sidebar">
-      <div class="sidebar-header">
-        <span>📚 History</span>
-        <button class="sidebar-close" id="sidebar-close">✕</button>
-      </div>
-      <div class="sidebar-content" id="history-content">
-        <div class="empty-state">No browsing history yet.</div>
+    <!-- ERROR -->
+    <div class="ov hide" id="ov-err">
+      <div class="e-ico">⚠</div>
+      <div class="e-ttl">Page Unavailable</div>
+      <div class="e-msg" id="e-msg">This page couldn't be loaded.</div>
+      <div class="e-row">
+        <button class="btn btn-c" id="btn-retry">↺ Retry with Proxy</button>
+        <button class="btn btn-g" id="btn-ext">↗ Open in New Tab</button>
       </div>
     </div>
   </div>
 
-  <div id="toast"></div>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-hdr">
+      <button class="sb-tab act" data-p="hist">HISTORY</button>
+      <button class="sb-tab"     data-p="bm">BOOKMARKS</button>
+      <button class="sb-x" id="sb-close">✕</button>
+    </div>
+    <div class="sb-pane act" id="pane-hist"></div>
+    <div class="sb-pane"     id="pane-bm">
+      <button class="sb-add" id="do-bm">+ Bookmark This Page</button>
+      <div id="bm-list"></div>
+    </div>
+  </div>
 
-  <script>
-    (function() {
-      'use strict';
-      
-      const PROXY_CHAIN = [
-        url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        url => `https://corsproxy.io/?${encodeURIComponent(url)}`
-      ];
-      const LOAD_TIMEOUT = 10000;
-      
-      let historyStack = [];
-      let historyIndex = -1;
-      let currentUrl = '';
-      let useProxy = true;
-      let isLoading = false;
-      let loadTimer = null;
-      let browsingHistory = [];
-      
-      try {
-        browsingHistory = JSON.parse(localStorage.getItem('cb_history') || '[]');
-      } catch (e) { browsingHistory = []; }
+</div>
 
-      const $ = id => document.getElementById(id);
-      const frame = $('main-frame');
-      const urlInput = $('url-input');
-      const backBtn = $('back-btn');
-      const fwdBtn = $('fwd-btn');
-      const reloadBtn = $('reload-btn');
-      const homeBtn = $('home-btn');
-      const modeBtn = $('mode-btn');
-      const statusDot = $('status-dot');
-      const sidebarBtn = $('sidebar-btn');
-      const sidebar = $('sidebar');
-      const sidebarClose = $('sidebar-close');
-      const historyContent = $('history-content');
-      const homeOverlay = $('home-overlay');
-      const loadingOverlay = $('loading-overlay');
-      const loadingText = $('loading-text');
-      const errorOverlay = $('error-overlay');
-      const errorText = $('error-text');
-      const toast = $('toast');
+<!-- TOAST -->
+<div id="toast"></div>
 
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => { $('boot-progress').style.width = '100%'; }, 100);
-        setTimeout(() => {
-          $('boot').classList.add('hidden');
-          $('app').classList.add('active');
-          updateNavButtons();
-          renderHistory();
-        }, 800);
-      });
-
-      // === YOUTUBE URL HANDLER ===
-      function extractYouTubeID(url) {
-        const patterns = [
-          /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/,
-          /youtube\.com\/watch\?.*?v=([^&\s]+)/,
-          /youtube\.com\/v\/([^&\s]+)/,
-          /youtube\.com\/shorts\/([^&\s]+)/
-        ];
-        for (const pattern of patterns) {
-          const match = url.match(pattern);
-          if (match && match[1]) return match[1];
-        }
-        return null;
-      }
-
-      function isYouTube(url) {
-        return /youtube\.com|youtu\.be/i.test(url);
-      }
-
-      function getYouTubeEmbedUrl(url) {
-        const videoId = extractYouTubeID(url);
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
-        }
-        return 'https://www.youtube.com/embed?list=RD';
-      }
-
-      function navigate(input, addToHistory = true) {
-        if (!input || typeof input !== 'string') return;
-        let url = normalizeUrl(input.trim());
-        
-        // Auto-convert YouTube URLs to embed format
-        if (isYouTube(url)) {
-          url = getYouTubeEmbedUrl(url);
-        }
-        
-        if (url === currentUrl && !isLoading) return;
-        
-        currentUrl = url;
-        urlInput.value = url;
-        showLoading(`Connecting to ${getHostname(url)}...`);
-        
-        if (addToHistory) {
-          historyStack = historyStack.slice(0, historyIndex + 1);
-          historyStack.push(url);
-          historyIndex = historyStack.length - 1;
-          updateNavButtons();
-          addToBrowsingHistory(url);
-        }
-        
-        loadPage(url);
-      }
-
-      function normalizeUrl(input) {
-        if (!input) return '';
-        if (/^https?:\/\//i.test(input)) return input;
-        if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(input) && !input.includes(' ')) {
-          return 'https://' + input;
-        }
-        return `https://www.google.com/search?q=${encodeURIComponent(input)}`;
-      }
-
-      function getHostname(url) {
-        try { return new URL(url).hostname; } catch { return url; }
-      }
-
-      async function loadPage(url) {
-        hideOverlays();
-        isLoading = true;
-        frame.src = 'about:blank';
-        
-        try {
-          if (useProxy && !isYouTube(url)) {
-            await loadViaProxy(url);
-          } else {
-            await loadDirect(url);
-          }
-        } catch (err) {
-          console.warn('Load error:', err.message);
-          showError(err.message || 'Failed to load page.');
-        } finally {
-          isLoading = false;
-          clearTimeout(loadTimer);
-        }
-      }
-
-      function loadDirect(url) {
-        return new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Load timed out.')), LOAD_TIMEOUT);
-          
-          frame.onload = () => { 
-            clearTimeout(timeout); 
-            resolve(); 
-          };
-          
-          frame.onerror = () => { 
-            clearTimeout(timeout); 
-            reject(new Error('Network error.')); 
-          };
-          
-          frame.src = url;
-          
-          // Keep-alive check for YouTube
-          if (isYouTube(url)) {
-            loadTimer = setInterval(() => {
-              try {
-                if (frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
-                  frame.src = url;
-                }
-              } catch (e) {}
-            }, 3000);
-          }
-        });
-      }
-
-      async function loadViaProxy(url) {
-        loadingText.textContent = 'Fetching via proxy...';
-        
-        for (let i = 0; i < PROXY_CHAIN.length; i++) {
-          try {
-            const proxyUrl = PROXY_CHAIN[i](url);
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            
-            const res = await fetch(proxyUrl, {
-              method: 'GET',
-              headers: { 'Accept': 'text/html,application/xhtml+xml' },
-              signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-            if (!res.ok) continue;
-            
-            let html = await res.text();
-            html = sanitizeHtml(html, url);
-            
-            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-            const blobUrl = URL.createObjectURL(blob);
-            
-            return new Promise((resolve, reject) => {
-              const t = setTimeout(() => reject(new Error('Proxy timeout.')), LOAD_TIMEOUT);
-              frame.onload = () => { clearTimeout(t); URL.revokeObjectURL(blobUrl); resolve(); };
-              frame.onerror = () => { clearTimeout(t); reject(new Error('Proxy failed.')); };
-              frame.src = blobUrl;
-            });
-          } catch (err) {
-            if (i === PROXY_CHAIN.length - 1) throw err;
-          }
-        }
-        throw new Error('All proxies failed.');
-      }
-
-      function sanitizeHtml(html, baseUrl) {
-        try {
-          html = html.replace(/<meta[^>]+http-equiv=["']?(X-Frame-Options|Content-Security-Policy)[^>]*>/gi, '');
-          html = html.replace(/<head[^>]*>/i, match => `${match}<base href="${baseUrl}">`);
-          return html;
-        } catch (e) { return html; }
-      }
-
-      backBtn.onclick = () => {
-        if (historyIndex > 0) {
-          historyIndex--;
-          navigate(historyStack[historyIndex], false);
-          updateNavButtons();
-        }
-      };
-      
-      fwdBtn.onclick = () => {
-        if (historyIndex < historyStack.length - 1) {
-          historyIndex++;
-          navigate(historyStack[historyIndex], false);
-          updateNavButtons();
-        }
-      };
-      
-      reloadBtn.onclick = () => { if (currentUrl) navigate(currentUrl, false); };
-      homeBtn.onclick = () => {
-        currentUrl = '';
-        urlInput.value = '';
-        frame.src = 'about:blank';
-        showHome();
-        updateNavButtons();
-      };
-      
-      urlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') navigate(urlInput.value);
-      });
-      
-      modeBtn.onclick = () => {
-        useProxy = !useProxy;
-        modeBtn.classList.toggle('active', useProxy);
-        statusDot.className = `status-dot ${useProxy ? '' : 'error'}`;
-        showToast(useProxy ? 'Proxy ON' : 'Proxy OFF', 'info');
-        if (currentUrl) navigate(currentUrl, false);
-      };
-
-      sidebarBtn.onclick = () => sidebar.classList.add('open');
-      sidebarClose.onclick = () => sidebar.classList.remove('open');
-      
-      document.querySelectorAll('.quick-link').forEach(btn => {
-        btn.onclick = () => navigate(btn.dataset.url);
-      });
-
-      $('retry-proxy-btn').onclick = () => {
-        useProxy = true;
-        modeBtn.classList.add('active');
-        statusDot.className = 'status-dot';
-        if (currentUrl) navigate(currentUrl, false);
-      };
-      
-      $('open-external-btn').onclick = () => {
-        if (currentUrl) window.open(currentUrl, '_blank', 'noopener,noreferrer');
-      };
-
-      function addToBrowsingHistory(url) {
-        try {
-          const title = getHostname(url);
-          browsingHistory = browsingHistory.filter(h => h.url !== url);
-          browsingHistory.unshift({ url, title, time: Date.now() });
-          if (browsingHistory.length > 50) browsingHistory = browsingHistory.slice(0, 50);
-          localStorage.setItem('cb_history', JSON.stringify(browsingHistory));
-          renderHistory();
-        } catch (e) {}
-      }
-
-      function renderHistory() {
-        if (browsingHistory.length === 0) {
-          historyContent.innerHTML = '<div class="empty-state">No browsing history yet.</div>';
-          return;
-        }
-        historyContent.innerHTML = browsingHistory.map(h => `
-          <div class="list-item" data-url="${escapeAttr(h.url)}">
-            <div class="item-title">${escapeHtml(h.title)}</div>
-            <div class="item-url">${escapeHtml(h.url)}</div>
-            <div class="item-actions">
-              <button class="item-btn" onclick="window.navigate('${escapeAttr(h.url)}')">Visit</button>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      function showHome() { hideOverlays(); homeOverlay.classList.remove('hidden'); }
-      function showLoading(text) { hideOverlays(); loadingText.textContent = text || 'Loading...'; loadingOverlay.classList.remove('hidden'); }
-      function showError(msg) { hideOverlays(); errorText.textContent = msg || 'Failed to load'; errorOverlay.classList.remove('hidden'); }
-      function hideOverlays() {
-        homeOverlay.classList.add('hidden');
-        loadingOverlay.classList.add('hidden');
-        errorOverlay.classList.add('hidden');
-      }
-      function updateNavButtons() {
-        backBtn.disabled = historyIndex <= 0;
-        fwdBtn.disabled = historyIndex >= historyStack.length - 1;
-      }
-      
-      window.navigate = navigate;
-
-      // === FIXED ABOUT:BLANK CLOAKING ===
-      $('cloak-btn').onclick = function() {
-        try {
-          const cloakWin = window.open('about:blank', '_blank', 'noopener,noreferrer');
-          if (!cloakWin) return showToast('Pop-up blocked. Allow pop-ups.', 'error');
-          
-          // Create complete HTML with inline CSS
-          const fullHTML = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Crown Browser</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#0a0a0f;color:#f1f5f9;font-family:system-ui,sans-serif;overflow:hidden}
-#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px}
-.spinner{width:40px;height:40px;border:3px solid rgba(0,212,255,0.2);border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.msg{color:#00d4ff;font-size:16px}
-</style>
-</head>
-<body>
-<div id="loading"><div class="spinner"></div><div class="msg">🔒 Loading Crown Browser...</div></div>
 <script>
-setTimeout(function(){
-try{
-var html='${document.documentElement.outerHTML.replace(/'/g, "\\'").replace(/</g, '\\x3C')}';
-document.open();document.write(html);document.close();
-}catch(e){document.body.innerHTML='<h2 style="color:#ef4444;text-align:center;margin-top:20%">Cloak failed: '+e.message+'</h2>';}
-},400);
-<\/script>
-</body>
-</html>`;
-          
-          // Use srcdoc for reliability (better than document.write)
-          cloakWin.document.open();
-          cloakWin.document.write(fullHTML);
-          cloakWin.document.close();
-          
-          showToast('✓ Opened in cloaked window', 'success');
-          
-          // Close original window after delay
-          setTimeout(() => {
-            try { window.close(); } catch(e) {}
-          }, 1000);
-          
-        } catch (e) {
-          showToast('Cloak failed: ' + e.message, 'error');
-        }
-      };
+(function () {
+  'use strict';
 
-      window.addEventListener('message', (e) => {
-        if (e.data && e.data.type === 'navigate' && e.data.url) {
-          navigate(e.data.url);
-        }
+  /* =============================================
+     CONFIG
+  ============================================= */
+  const PROXIES = [
+    u => `https://api.allorigins.win/raw?url=${enc(u)}`,
+    u => `https://corsproxy.io/?${enc(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`
+  ];
+
+  // Public Invidious instances (YouTube alternative frontends)
+  const INVIDIOUS = [
+    'https://invidious.kavin.rocks',
+    'https://yewtu.be',
+    'https://inv.riverside.rocks',
+    'https://invidious.snopyta.org'
+  ];
+
+  const TIMEOUT = 13000;
+
+  /* =============================================
+     STATE
+  ============================================= */
+  let tabs = [mk(1, 'New Tab', '')];
+  let tid  = 2;         // next tab id
+  let act  = 1;         // active tab id
+  let busy = false;
+  let proxyOn = true;
+  let theater = false;
+  let blobUrl = null;
+
+  let hist = [];
+  let bms  = [];
+  try { hist = JSON.parse(localStorage.getItem('cr_hist') || '[]'); } catch {}
+  try { bms  = JSON.parse(localStorage.getItem('cr_bm')   || '[]'); } catch {}
+
+  /* =============================================
+     ELEMENTS
+  ============================================= */
+  const $ = id => document.getElementById(id);
+  const frame   = $('frame');
+  const urlBar  = $('url');
+  const ovHome  = $('ov-home');
+  const ovLoad  = $('ov-load');
+  const lSub    = $('l-sub');
+  const ovErr   = $('ov-err');
+  const eMsg    = $('e-msg');
+  const toastEl = $('toast');
+  const tabsEl  = $('tabs');
+  const sidebar = $('sidebar');
+
+  /* =============================================
+     BOOT
+  ============================================= */
+  requestAnimationFrame(() => { $('bfill').style.width = '100%'; });
+  setTimeout(() => {
+    $('boot').classList.add('out');
+    setTimeout(() => {
+      $('boot').style.display = 'none';
+      $('app').classList.add('on');
+      renderTabs();
+      showHome();
+    }, 450);
+  }, 1050);
+
+  /* =============================================
+     UTILS
+  ============================================= */
+  function enc(u) { return encodeURIComponent(u); }
+
+  function mk(id, title, url) {
+    return { id, title, url, stack: [], si: -1 };
+  }
+
+  function cur() { return tabs.find(t => t.id === act); }
+
+  function host(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ''); }
+    catch { return u.slice(0, 30); }
+  }
+
+  function norm(raw) {
+    raw = raw.trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
+      return 'https://' + raw;
+    return `https://www.google.com/search?q=${enc(raw)}`;
+  }
+
+  function isYT(u) { return /youtube\.com|youtu\.be/i.test(u); }
+
+  function ytEmbed(u) {
+    const m = u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+    if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0&modestbranding=1`;
+    // Fallback to Invidious homepage
+    return INVIDIOUS[0] + '/';
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escA(s) {
+    return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  }
+
+  /* =============================================
+     TABS
+  ============================================= */
+  function renderTabs() {
+    tabsEl.querySelectorAll('.tab').forEach(el => el.remove());
+    tabs.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'tab' + (t.id === act ? ' act' : '');
+      el.dataset.id = t.id;
+      el.innerHTML = `<span class="tab-lbl">${esc(t.title)}</span><span class="tab-x" data-x="${t.id}">✕</span>`;
+      el.addEventListener('click', e => {
+        const x = e.target.dataset.x;
+        if (x) { closeTab(+x); return; }
+        switchTab(t.id);
       });
+      tabsEl.insertBefore(el, $('btn-newtab'));
+    });
+  }
 
-      document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
-        if (e.key === 'Backspace' && historyIndex > 0) { e.preventDefault(); backBtn.click(); }
-        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) { e.preventDefault(); reloadBtn.click(); }
-        if (e.key === 'Escape') sidebar.classList.remove('open');
-      });
+  function newTab(url) {
+    const t = mk(tid++, 'New Tab', url || '');
+    tabs.push(t);
+    act = t.id;
+    renderTabs();
+    if (url) nav(url);
+    else { showHome(); urlBar.value = ''; }
+    navBtns();
+  }
 
-      function escapeHtml(str) {
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
+  function switchTab(id) {
+    const t = tabs.find(x => x.id === id);
+    if (!t) return;
+    act = id;
+    renderTabs();
+    if (t.url) nav(t.url, false);
+    else { showHome(); urlBar.value = ''; }
+    navBtns();
+  }
+
+  function closeTab(id) {
+    if (tabs.length === 1) { newTab(); }
+    tabs = tabs.filter(t => t.id !== id);
+    if (act === id) {
+      act = tabs[tabs.length - 1].id;
+      const t = cur();
+      if (t.url) nav(t.url, false);
+      else showHome();
+    }
+    renderTabs();
+  }
+
+  $('btn-newtab').onclick = () => newTab();
+
+  /* =============================================
+     NAVIGATION
+  ============================================= */
+  async function nav(input, push = true) {
+    const url = norm(input);
+    if (!url) return;
+    const t = cur();
+    t.url   = url;
+    t.title = host(url);
+    urlBar.value = url;
+    if (push && (t.si < 0 || t.stack[t.si] !== url)) {
+      t.stack = t.stack.slice(0, t.si + 1);
+      t.stack.push(url);
+      t.si = t.stack.length - 1;
+    }
+    navBtns();
+    renderTabs();
+    addHist(url);
+    await load(url);
+  }
+  window.nav = nav; // global access for sidebar buttons
+
+  /* =============================================
+     LOAD
+  ============================================= */
+  async function load(url) {
+    busy = true;
+    showLoad(`Connecting to ${host(url)}…`);
+    if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+    frame.src = 'about:blank';
+
+    try {
+      if (isYT(url)) {
+        await direct(ytEmbed(url));
+      } else if (!proxyOn) {
+        await direct(url);
+      } else {
+        await withProxy(url);
       }
-      function escapeAttr(str) {
-        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    } catch (e) {
+      showErr(e.message || 'Page failed to load.');
+    } finally {
+      busy = false;
+    }
+  }
+
+  function direct(url) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('Connection timed out.')), TIMEOUT);
+      frame.onload  = () => { clearTimeout(t); hideOvs(); resolve(); };
+      frame.onerror = () => { clearTimeout(t); reject(new Error('Connection failed.')); };
+      frame.src = url;
+    });
+  }
+
+  async function withProxy(url) {
+    for (let i = 0; i < PROXIES.length; i++) {
+      lSub.textContent = `Trying proxy ${i + 1} of ${PROXIES.length}…`;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 9500);
+      try {
+        const res = await fetch(PROXIES[i](url), {
+          signal: ctrl.signal,
+          headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
+        });
+        clearTimeout(t);
+        if (!res.ok) continue;
+        const raw = await res.text();
+        const blob = new Blob([patchHtml(raw, url)], { type: 'text/html;charset=utf-8' });
+        blobUrl = URL.createObjectURL(blob);
+        await direct(blobUrl);
+        return;
+      } catch {
+        clearTimeout(t);
+        if (i === PROXIES.length - 1)
+          throw new Error(`All ${PROXIES.length} proxies failed. Try toggling Proxy OFF or open externally.`);
       }
-      function showToast(msg, type = 'info') {
-        toast.textContent = msg;
-        toast.className = `toast show ${type}`;
-        setTimeout(() => toast.classList.remove('show'), 2500);
-      }
-    })();
-  </script>
+    }
+  }
+
+  function patchHtml(html, base) {
+    // Strip X-Frame-Options and CSP meta tags
+    html = html.replace(/<meta[^>]+(X-Frame-Options|Content-Security-Policy|x-frame-options|content-security-policy)[^>]*>/gi, '');
+    // Inject <base> to fix relative URLs
+    const baseTag = `<base href="${base}">`;
+    if (/<head[\s>]/i.test(html)) {
+      html = html.replace(/<head[\s>][^>]*>/i, m => m + baseTag);
+    } else {
+      html = baseTag + html;
+    }
+    // Fix protocol-relative URLs: //example.com → https://example.com
+    try {
+      const proto = new URL(base).protocol;
+      html = html.replace(/(src|href|action)=["']\/\//g, `$1="${proto}//`);
+    } catch {}
+    return html;
+  }
+
+  /* =============================================
+     OVERLAY MANAGEMENT
+  ============================================= */
+  function showHome()    { frame.src = 'about:blank'; ovHome.classList.remove('hide'); ovLoad.classList.add('hide'); ovErr.classList.add('hide'); }
+  function showLoad(msg) { lSub.textContent = msg; ovHome.classList.add('hide'); ovLoad.classList.remove('hide'); ovErr.classList.add('hide'); }
+  function showErr(msg)  { eMsg.textContent = msg; ovHome.classList.add('hide'); ovLoad.classList.add('hide'); ovErr.classList.remove('hide'); }
+  function hideOvs()     { ovHome.classList.add('hide'); ovLoad.classList.add('hide'); ovErr.classList.add('hide'); }
+
+  /* =============================================
+     NAV BUTTONS
+  ============================================= */
+  function navBtns() {
+    const t = cur();
+    $('btn-back').disabled = t.si <= 0;
+    $('btn-fwd').disabled  = t.si >= t.stack.length - 1;
+  }
+
+  $('btn-back').onclick = () => { const t = cur(); if (t.si > 0) { t.si--; nav(t.stack[t.si], false); } };
+  $('btn-fwd').onclick  = () => { const t = cur(); if (t.si < t.stack.length - 1) { t.si++; nav(t.stack[t.si], false); } };
+  $('btn-rl').onclick   = () => { const t = cur(); if (t.url) load(t.url); };
+  $('btn-home').onclick = () => { const t = cur(); t.url = ''; t.title = 'New Tab'; renderTabs(); urlBar.value = ''; showHome(); };
+
+  urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') nav(urlBar.value); });
+
+  /* =============================================
+     HOME SCREEN
+  ============================================= */
+  $('h-go').onclick = () => nav($('h-url').value);
+  $('h-url').addEventListener('keydown', e => { if (e.key === 'Enter') nav($('h-url').value); });
+  document.querySelectorAll('.qtile').forEach(el => {
+    el.onclick = () => nav(el.dataset.url);
+  });
+
+  /* =============================================
+     PROXY TOGGLE
+  ============================================= */
+  $('btn-proxy').onclick = () => {
+    proxyOn = !proxyOn;
+    $('btn-proxy').classList.toggle('on', proxyOn);
+    toast(proxyOn ? 'Proxy ON' : 'Proxy OFF', proxyOn ? 'ok' : 'inf');
+    const t = cur();
+    if (t.url) load(t.url);
+  };
+
+  /* =============================================
+     THEATER MODE
+  ============================================= */
+  $('btn-theater').onclick = toggleTheater;
+  function toggleTheater() {
+    theater = !theater;
+    $('topbar').style.display = theater ? 'none' : '';
+    $('tabs').style.display   = theater ? 'none' : '';
+    if (theater) toast('Theater mode — Esc to exit', 'inf');
+  }
+
+  /* =============================================
+     BOOKMARK THIS PAGE
+  ============================================= */
+  $('btn-bm').onclick = () => {
+    const t = cur();
+    if (!t.url) { toast('Nothing to bookmark', 'inf'); return; }
+    if (bms.find(b => b.url === t.url)) { toast('Already bookmarked', 'inf'); return; }
+    bms.unshift({ url: t.url, title: t.title });
+    saveBms();
+    renderBms();
+    toast('Bookmarked!', 'ok');
+  };
+
+  /* =============================================
+     ABOUT:BLANK CLOAK
+     Opens a new window showing about:blank in the
+     address bar, but loads Crown inside an iframe.
+  ============================================= */
+  $('btn-cloak').onclick = () => {
+    try {
+      const w = window.open('', '_blank');
+      if (!w) { toast('Pop-ups blocked — allow pop-ups first', 'err'); return; }
+      const src = window.location.href;
+      w.document.open();
+      w.document.write(`<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Google</title>
+<style>*{margin:0;padding:0}body,html{height:100%;overflow:hidden;background:#06060f}</style>
+</head><body>
+<iframe src="${src.replace(/"/g,'&quot;')}" style="position:fixed;inset:0;width:100%;height:100%;border:none" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe>
+</body></html>`);
+      w.document.close();
+      toast('Cloaked tab opened ✓', 'ok');
+    } catch (e) {
+      toast('Cloak failed: ' + e.message, 'err');
+    }
+  };
+
+  /* =============================================
+     ERROR ACTIONS
+  ============================================= */
+  $('btn-retry').onclick = () => {
+    proxyOn = true;
+    $('btn-proxy').classList.add('on');
+    const t = cur();
+    if (t.url) load(t.url);
+  };
+  $('btn-ext').onclick = () => {
+    const t = cur();
+    if (t.url) window.open(t.url, '_blank', 'noopener');
+  };
+
+  /* =============================================
+     SIDEBAR
+  ============================================= */
+  $('btn-sb').onclick   = () => { sidebar.classList.add('open'); renderSidebar(); };
+  $('sb-close').onclick = () => sidebar.classList.remove('open');
+
+  document.querySelectorAll('.sb-tab').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.sb-tab').forEach(b => b.classList.remove('act'));
+      document.querySelectorAll('.sb-pane').forEach(p => p.classList.remove('act'));
+      btn.classList.add('act');
+      $('pane-' + btn.dataset.p).classList.add('act');
+      renderSidebar();
+    };
+  });
+
+  function renderSidebar() { renderHist(); renderBms(); }
+
+  function renderHist() {
+    const el = $('pane-hist');
+    if (!hist.length) { el.innerHTML = '<div class="empty">No history yet.</div>'; return; }
+    el.innerHTML = hist.slice(0, 60).map((h, i) => `
+      <div class="si">
+        <div class="si-ttl">${esc(h.title)}</div>
+        <div class="si-url">${esc(h.url)}</div>
+        <div class="si-row">
+          <button class="sm" onclick="nav('${escA(h.url)}');document.getElementById('sidebar').classList.remove('open')">Visit</button>
+          <button class="sm" onclick="delHist(${i})">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.delHist = i => {
+    hist.splice(i, 1);
+    saveHist();
+    renderHist();
+  };
+
+  function renderBms() {
+    const el = $('bm-list');
+    if (!bms.length) { el.innerHTML = '<div class="empty">No bookmarks yet.</div>'; return; }
+    el.innerHTML = bms.map((b, i) => `
+      <div class="si">
+        <div class="si-ttl">${esc(b.title)}</div>
+        <div class="si-url">${esc(b.url)}</div>
+        <div class="si-row">
+          <button class="sm" onclick="nav('${escA(b.url)}');document.getElementById('sidebar').classList.remove('open')">Visit</button>
+          <button class="sm" onclick="delBm(${i})">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  $('do-bm').onclick = $('btn-bm').onclick;
+
+  window.delBm = i => {
+    bms.splice(i, 1);
+    saveBms();
+    renderBms();
+  };
+
+  /* =============================================
+     PERSIST
+  ============================================= */
+  function addHist(url) {
+    const title = host(url);
+    hist = hist.filter(h => h.url !== url);
+    hist.unshift({ url, title });
+    if (hist.length > 100) hist.length = 100;
+    saveHist();
+  }
+  function saveHist() { try { localStorage.setItem('cr_hist', JSON.stringify(hist)); } catch {} }
+  function saveBms()  { try { localStorage.setItem('cr_bm',   JSON.stringify(bms));  } catch {} }
+
+  /* =============================================
+     KEYBOARD SHORTCUTS
+  ============================================= */
+  document.addEventListener('keydown', e => {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || e.target.isContentEditable) return;
+    if (e.key === 'Escape') {
+      if (theater) toggleTheater();
+      sidebar.classList.remove('open');
+    }
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+      e.preventDefault(); $('btn-rl').click();
+    }
+    if (e.key === 'F11') { e.preventDefault(); toggleTheater(); }
+    if (e.ctrlKey && e.key === 't') { e.preventDefault(); newTab(); }
+    if (e.ctrlKey && e.key === 'w') { e.preventDefault(); closeTab(act); }
+    if (e.altKey && e.key === 'ArrowLeft')  $('btn-back').click();
+    if (e.altKey && e.key === 'ArrowRight') $('btn-fwd').click();
+    if (e.key === 'F6') { e.preventDefault(); urlBar.select(); }
+  });
+
+  /* =============================================
+     TOAST
+  ============================================= */
+  let ttimer;
+  function toast(msg, type = 'inf') {
+    toastEl.textContent = msg;
+    toastEl.className = `show ${type}`;
+    clearTimeout(ttimer);
+    ttimer = setTimeout(() => { toastEl.className = ''; }, 2700);
+  }
+  window.toast = toast;
+
+})();
+</script>
 </body>
 </html>
