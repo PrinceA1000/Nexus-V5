@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Crown Browser | Unblocked</title>
+  <title>Crown Browser</title>
   <style>
     :root {
       --bg: #030306;
@@ -11,7 +11,8 @@
       --glass: rgba(12, 12, 18, 0.85);
       --neon: #00d2ff;
       --purple: #7c5cff;
-      --accent: #ff3e6c;
+      --green: #10b981;
+      --red: #ef4444;
       --border: rgba(124, 92, 255, 0.25);
       --text: #f0f0f5;
       --text-dim: rgba(240, 240, 245, 0.65);
@@ -21,15 +22,14 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
-    
     .bg-gradient { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(900px 600px at 10% 0%, rgba(124,92,255,0.1), transparent 70%), radial-gradient(700px 500px at 90% 20%, rgba(0,210,255,0.08), transparent 65%); }
     
     /* Boot */
     #boot { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
     #boot.hidden { opacity: 0; pointer-events: none; }
-    .boot-logo { font-size: 2.6rem; font-weight: 800; letter-spacing: 6px; background: linear-gradient(135deg, var(--neon), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
-    .boot-sub { font-size: 0.95rem; color: var(--text-dim); margin-bottom: 2rem; }
-    .boot-bar { width: 260px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .boot-logo { font-size: 2.4rem; font-weight: 800; letter-spacing: 5px; background: linear-gradient(135deg, var(--neon), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+    .boot-sub { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 2rem; }
+    .boot-bar { width: 240px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
     .boot-progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon), var(--purple)); transition: width 1.2s ease; }
 
     /* Main UI */
@@ -38,63 +38,70 @@
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
     /* Top Bar */
-    #topbar { height: 58px; display: flex; align-items: center; padding: 0 14px; gap: 10px; background: var(--glass); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); z-index: 10; }
-    .nav-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text); cursor: pointer; display: grid; place-items: center; font-size: 16px; transition: all 0.2s; }
+    #topbar { height: 56px; display: flex; align-items: center; padding: 0 12px; gap: 8px; background: var(--glass); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); z-index: 10; }
+    .nav-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text); cursor: pointer; display: grid; place-items: center; font-size: 15px; transition: all 0.2s; }
     .nav-btn:hover:not(:disabled) { background: rgba(124,92,255,0.2); border-color: var(--neon); transform: translateY(-1px); }
     .nav-btn:disabled { opacity: 0.4; cursor: default; }
     .address-box { flex: 1; position: relative; }
-    #url-input { width: 100%; height: 38px; padding: 0 42px 0 14px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; }
+    #url-input { width: 100%; height: 36px; padding: 0 40px 0 12px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; }
     #url-input:focus { border-color: var(--neon); box-shadow: 0 0 0 3px rgba(0,210,255,0.15); }
     #url-input::placeholder { color: var(--text-dim); }
     .url-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 14px; pointer-events: none; }
-    .mode-toggle { padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-    .mode-toggle.active { background: linear-gradient(135deg, var(--purple), var(--neon)); border: none; color: white; box-shadow: var(--glow); }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green, #10b981); margin-left: 8px; box-shadow: 0 0 8px currentColor; }
-    .status-dot.error { background: #ef4444; }
+    .mode-btn { padding: 6px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .mode-btn.active { background: linear-gradient(135deg, var(--purple), var(--neon)); border: none; color: white; box-shadow: var(--glow); }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px currentColor; }
+    .status-dot.error { background: var(--red); }
 
-    /* Content Area */
+    /* Viewport */
     #viewport { flex: 1; position: relative; background: #000; overflow: hidden; }
     #main-frame { width: 100%; height: 100%; border: none; background: #fff; }
     
     /* Overlays */
     .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, var(--panel), var(--bg)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; z-index: 5; transition: opacity 0.3s; }
     .overlay.hidden { opacity: 0; pointer-events: none; }
-    .loading-spinner { width: 48px; height: 48px; border: 3px solid rgba(0,210,255,0.2); border-top-color: var(--neon); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+    .loading-spinner { width: 44px; height: 44px; border: 3px solid rgba(0,210,255,0.2); border-top-color: var(--neon); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .overlay-title { font-size: 18px; font-weight: 700; color: var(--neon); margin-bottom: 8px; }
-    .overlay-text { font-size: 13px; color: var(--text-dim); max-width: 360px; line-height: 1.5; margin-bottom: 16px; }
-    .action-btn { padding: 10px 18px; background: var(--neon); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer; transition: filter 0.2s; }
+    .overlay-title { font-size: 17px; font-weight: 700; color: var(--neon); margin-bottom: 6px; }
+    .overlay-text { font-size: 13px; color: var(--text-dim); max-width: 340px; line-height: 1.5; margin-bottom: 14px; }
+    .action-btn { padding: 9px 16px; background: var(--neon); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer; transition: filter 0.2s; font-size: 13px; }
     .action-btn:hover { filter: brightness(1.1); }
     .action-btn.secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
     .action-btn.secondary:hover { background: rgba(124,92,255,0.15); }
+    .quick-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+    .quick-link { padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 12px; transition: all 0.2s; }
+    .quick-link:hover { border-color: var(--neon); background: rgba(0,210,255,0.1); }
 
-    /* Sidebar (History/Bookmarks) */
-    #sidebar { position: absolute; top: 58px; right: 0; bottom: 0; width: 300px; background: var(--glass); backdrop-filter: blur(14px); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform 0.3s ease; z-index: 20; display: flex; flex-direction: column; }
+    /* Sidebar */
+    #sidebar { position: absolute; top: 56px; right: 0; bottom: 0; width: 280px; background: var(--glass); backdrop-filter: blur(14px); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform 0.3s ease; z-index: 20; display: flex; flex-direction: column; }
     #sidebar.open { transform: translateX(0); }
-    .sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-    .sidebar-close { background: none; border: none; color: var(--text); cursor: pointer; font-size: 18px; }
+    .sidebar-header { padding: 14px; border-bottom: 1px solid var(--border); font-weight: 700; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+    .sidebar-close { background: none; border: none; color: var(--text); cursor: pointer; font-size: 18px; padding: 0 4px; }
+    .sidebar-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .tab:hover { background: rgba(255,255,255,0.05); }
+    .tab.active { border-bottom-color: var(--neon); color: var(--neon); }
     .sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
-    .sidebar-content::-webkit-scrollbar { width: 6px; }
+    .sidebar-content::-webkit-scrollbar { width: 5px; }
     .sidebar-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     .list-item { padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .list-item:hover { border-color: var(--neon); background: rgba(0,210,255,0.08); }
     .item-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .item-url { font-size: 11px; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .item-actions { display: flex; gap: 6px; margin-top: 6px; }
-    .item-btn { padding: 4px 8px; background: rgba(255,255,255,0.08); border: none; border-radius: 6px; color: var(--text); cursor: pointer; font-size: 11px; }
+    .item-btn { padding: 4px 8px; background: rgba(255,255,255,0.08); border: none; border-radius: 6px; color: var(--text); cursor: pointer; font-size: 11px; transition: 0.15s; }
     .item-btn:hover { background: var(--neon); color: #000; }
-    .empty-state { text-align: center; padding: 30px; color: var(--text-dim); font-size: 13px; }
+    .empty-state { text-align: center; padding: 28px; color: var(--text-dim); font-size: 13px; }
 
     /* Toast */
-    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--neon); padding: 12px 20px; border-radius: 8px; opacity: 0; transition: all 0.3s; z-index: 2000; font-size: 14px; box-shadow: var(--shadow); }
+    #toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--neon); padding: 10px 18px; border-radius: 8px; opacity: 0; transition: all 0.3s; z-index: 2000; font-size: 13px; box-shadow: var(--shadow); pointer-events: none; }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    #toast.success { border-left-color: #10b981; }
-    #toast.error { border-left-color: #ef4444; }
+    #toast.success { border-left-color: var(--green); }
+    #toast.error { border-left-color: var(--red); }
 
     /* Responsive */
     @media (max-width: 768px) {
       #sidebar { width: 100%; }
-      .mode-toggle span { display: none; }
+      .mode-btn span { display: none; }
     }
   </style>
 </head>
@@ -103,12 +110,11 @@
   
   <div id="boot">
     <div class="boot-logo">CROWN BROWSER</div>
-    <div class="boot-sub">🌐 Mini Unblocked Web Browser • GitHub Pages Ready</div>
+    <div class="boot-sub">🌐 Secure • Unblocked • GitHub Pages Ready</div>
     <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
   </div>
 
   <div id="browser">
-    <!-- Top Bar -->
     <div id="topbar">
       <button class="nav-btn" id="back-btn" title="Back" disabled>←</button>
       <button class="nav-btn" id="fwd-btn" title="Forward" disabled>→</button>
@@ -116,45 +122,43 @@
       <button class="nav-btn" id="home-btn" title="Home">⌂</button>
       
       <div class="address-box">
-        <input type="text" id="url-input" placeholder="Enter URL or search..." spellcheck="false">
+        <input type="text" id="url-input" placeholder="Enter URL or search..." spellcheck="false" autocomplete="off">
         <span class="url-icon">🔍</span>
       </div>
       
-      <button class="mode-toggle" id="mode-btn" title="Toggle Proxy Mode">
+      <button class="mode-btn" id="mode-btn" title="Toggle Proxy Mode">
         <span>🛡️ Proxy</span>
         <div class="status-dot" id="status-dot"></div>
       </button>
       
       <button class="nav-btn" id="sidebar-btn" title="History & Bookmarks">☰</button>
+      <button class="nav-btn" id="cloak-btn" title="Open in about:blank">🛡️</button>
     </div>
 
-    <!-- Viewport -->
     <div id="viewport">
-      <iframe id="main-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation" allowfullscreen></iframe>
+      <iframe id="main-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation" allowfullscreen></iframe>
       
-      <!-- Home Overlay -->
       <div class="overlay" id="home-overlay">
-        <div style="font-size: 48px; margin-bottom: 12px;">🌐</div>
+        <div style="font-size: 42px; margin-bottom: 10px;">🌐</div>
         <div class="overlay-title">Crown Browser</div>
-        <div class="overlay-text">A lightweight, unblocked browsing experience. Paste any URL above or use quick links below.</div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
-          <button class="action-btn secondary" onclick="navigate('https://youtube.com')">YouTube</button>
-          <button class="action-btn secondary" onclick="navigate('https://crunchyroll.com')">Crunchyroll</button>
-          <button class="action-btn secondary" onclick="navigate('https://wikipedia.org')">Wikipedia</button>
-          <button class="action-btn secondary" onclick="navigate('https://duckduckgo.com')">DuckDuckGo</button>
+        <div class="overlay-text">Fast, secure, and unblocked. Paste any URL above or use quick links.</div>
+        <div class="quick-links">
+          <button class="quick-link" onclick="navigate('https://youtube.com')">YouTube</button>
+          <button class="quick-link" onclick="navigate('https://crunchyroll.com')">Crunchyroll</button>
+          <button class="quick-link" onclick="navigate('https://wikipedia.org')">Wikipedia</button>
+          <button class="quick-link" onclick="navigate('https://duckduckgo.com')">DuckDuckGo</button>
+          <button class="quick-link" onclick="navigate('https://github.com')">GitHub</button>
         </div>
       </div>
 
-      <!-- Loading Overlay -->
       <div class="overlay hidden" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="overlay-title">Loading Page...</div>
-        <div class="overlay-text" id="loading-text">Connecting via direct embed...</div>
+        <div class="overlay-text" id="loading-text">Connecting...</div>
       </div>
 
-      <!-- Error Overlay -->
       <div class="overlay hidden" id="error-overlay">
-        <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
+        <div style="font-size: 42px; margin-bottom: 10px;">⚠️</div>
         <div class="overlay-title">Page Blocked or Unavailable</div>
         <div class="overlay-text" id="error-text">This site restricts embedding. Try enabling proxy mode or opening externally.</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
@@ -164,15 +168,14 @@
       </div>
     </div>
 
-    <!-- Sidebar -->
     <div id="sidebar">
       <div class="sidebar-header">
         <span>📚 History & Bookmarks</span>
         <button class="sidebar-close" id="sidebar-close">✕</button>
       </div>
-      <div style="display:flex; border-bottom:1px solid var(--border);">
-        <button class="mode-toggle active" id="tab-history" style="flex:1; border-radius:0; border:none; border-bottom:2px solid var(--neon);">History</button>
-        <button class="mode-toggle" id="tab-bookmarks" style="flex:1; border-radius:0; border:none; border-bottom:2px solid transparent; color:var(--text-dim);">Bookmarks</button>
+      <div class="sidebar-tabs">
+        <div class="tab active" id="tab-history">History</div>
+        <div class="tab" id="tab-bookmarks">Bookmarks</div>
       </div>
       <div class="sidebar-content" id="history-content">
         <div class="empty-state">No browsing history yet.</div>
@@ -186,418 +189,397 @@
   <div id="toast"></div>
 
   <script>
-    // === CONFIG ===
-    const HOME_URL = 'https://duckduckgo.com';
-    const PROXY_CHAIN = [
-      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-    ];
-
-    // === STATE ===
-    let historyStack = [];
-    let historyIndex = -1;
-    let currentUrl = '';
-    let useProxy = false;
-    let isLoading = false;
-    let bookmarks = JSON.parse(localStorage.getItem('cb_bookmarks') || '[]');
-    let browsingHistory = JSON.parse(localStorage.getItem('cb_history') || '[]');
-
-    // === DOM ===
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => document.querySelectorAll(sel);
-    const browser = $('#browser');
-    const frame = $('#main-frame');
-    const urlInput = $('#url-input');
-    const backBtn = $('#back-btn');
-    const fwdBtn = $('#fwd-btn');
-    const reloadBtn = $('#reload-btn');
-    const homeBtn = $('#home-btn');
-    const modeBtn = $('#mode-btn');
-    const statusDot = $('#status-dot');
-    const sidebarBtn = $('#sidebar-btn');
-    const sidebar = $('#sidebar');
-    const sidebarClose = $('#sidebar-close');
-    const tabHistory = $('#tab-history');
-    const tabBookmarks = $('#tab-bookmarks');
-    const historyContent = $('#history-content');
-    const bookmarksContent = $('#bookmarks-content');
-    const homeOverlay = $('#home-overlay');
-    const loadingOverlay = $('#loading-overlay');
-    const loadingText = $('#loading-text');
-    const errorOverlay = $('#error-overlay');
-    const errorText = $('#error-text');
-    const toast = $('#toast');
-
-    // === INIT ===
-    setTimeout(() => $('#boot-progress').style.width = '100%', 100);
-    setTimeout(() => {
-      $('#boot').classList.add('hidden');
-      browser.classList.add('active');
-      updateNavButtons();
-      renderHistory();
-      renderBookmarks();
-    }, 1200);
-
-    // === CORE NAVIGATION ===
-    function navigate(url, addToHistory = true) {
-      if (!url) return;
-      url = normalizeUrl(url);
-      if (url === currentUrl && !isLoading) return;
+    (function() {
+      'use strict';
       
-      currentUrl = url;
-      urlInput.value = url;
-      showLoading(`Connecting to ${new URL(url).hostname}...`);
+      // === CONFIG ===
+      const PROXY_CHAIN = [
+        url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      ];
+      const LOAD_TIMEOUT = 12000;
       
-      // Add to history stack
-      if (addToHistory) {
-        historyStack = historyStack.slice(0, historyIndex + 1);
-        historyStack.push(url);
-        historyIndex = historyStack.length - 1;
-        updateNavButtons();
-        addToBrowsingHistory(url);
-      }
-
-      // Determine load strategy
-      const platform = detectPlatform(url);
-      loadPage(url, platform);
-    }
-
-    function normalizeUrl(input) {
-      input = input.trim();
-      if (!input.startsWith('http://') && !input.startsWith('https://')) {
-        if (input.includes('.') && !input.includes(' ')) {
-          input = 'https://' + input;
-        } else {
-          input = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
-        }
-      }
-      return input;
-    }
-
-    function detectPlatform(url) {
-      const hostname = new URL(url).hostname;
-      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) return 'youtube';
-      if (hostname.includes('crunchyroll.com')) return 'crunchyroll';
-      if (hostname.includes('twitch.tv')) return 'twitch';
-      if (hostname.includes('vimeo.com')) return 'vimeo';
-      if (hostname.includes('dailymotion.com')) return 'dailymotion';
-      return 'generic';
-    }
-
-    async function loadPage(url, platform) {
-      hideOverlays();
-      showLoading(`Loading ${platform} content...`);
+      // === STATE ===
+      let historyStack = [];
+      let historyIndex = -1;
+      let currentUrl = '';
+      let useProxy = false;
+      let isLoading = false;
+      let loadTimer = null;
       
       try {
-        if (useProxy) {
-          await loadViaProxy(url);
-        } else {
-          await loadDirect(url, platform);
-        }
-      } catch (err) {
-        console.error('Load failed:', err);
-        showError(err.message || 'Failed to load page');
+        var bookmarks = JSON.parse(localStorage.getItem('cb_bookmarks') || '[]');
+        var browsingHistory = JSON.parse(localStorage.getItem('cb_history') || '[]');
+      } catch (e) {
+        var bookmarks = [], browsingHistory = [];
       }
-    }
 
-    function loadDirect(url, platform) {
-      return new Promise((resolve, reject) => {
-        // Platform-specific embeds
-        if (platform === 'youtube') {
-          const id = extractYouTubeId(url);
-          if (id) {
-            frame.src = `https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&rel=0`;
-          } else {
-            frame.src = url;
-          }
-        } else if (platform === 'vimeo') {
-          const match = url.match(/vimeo\.com\/(\d+)/);
-          frame.src = match ? `https://player.vimeo.com/video/${match[1]}?autoplay=1` : url;
-        } else if (platform === 'dailymotion') {
-          const match = url.match(/dailymotion\.com\/video\/([^_]+)/);
-          frame.src = match ? `https://www.dailymotion.com/embed/video/${match[1]}?autoplay=1` : url;
-        } else {
-          frame.src = url;
+      // === DOM REFS ===
+      const $ = id => document.getElementById(id);
+      const $$ = sel => document.querySelectorAll(sel);
+      const frame = $('main-frame');
+      const urlInput = $('url-input');
+      const backBtn = $('back-btn');
+      const fwdBtn = $('fwd-btn');
+      const reloadBtn = $('reload-btn');
+      const homeBtn = $('home-btn');
+      const modeBtn = $('mode-btn');
+      const statusDot = $('status-dot');
+      const sidebarBtn = $('sidebar-btn');
+      const sidebar = $('sidebar');
+      const sidebarClose = $('sidebar-close');
+      const tabHistory = $('tab-history');
+      const tabBookmarks = $('tab-bookmarks');
+      const historyContent = $('history-content');
+      const bookmarksContent = $('bookmarks-content');
+      const homeOverlay = $('home-overlay');
+      const loadingOverlay = $('loading-overlay');
+      const loadingText = $('loading-text');
+      const errorOverlay = $('error-overlay');
+      const errorText = $('error-text');
+      const toast = $('toast');
+
+      // === INIT ===
+      setTimeout(() => $('boot-progress').style.width = '100%', 100);
+      setTimeout(() => {
+        $('boot').classList.add('hidden');
+        $('browser').classList.add('active');
+        updateNavButtons();
+        renderHistory();
+        renderBookmarks();
+      }, 1000);
+
+      // === NAVIGATION ===
+      function navigate(input, addToHistory = true) {
+        if (!input || typeof input !== 'string') return;
+        const url = normalizeUrl(input.trim());
+        if (url === currentUrl && !isLoading) return;
+        
+        currentUrl = url;
+        urlInput.value = url;
+        showLoading(`Connecting to ${getHostname(url)}...`);
+        
+        if (addToHistory) {
+          historyStack = historyStack.slice(0, historyIndex + 1);
+          historyStack.push(url);
+          historyIndex = historyStack.length - 1;
+          updateNavButtons();
+          addToBrowsingHistory(url);
         }
+        
+        loadPage(url);
+      }
 
-        // Timeout fallback
-        const timeout = setTimeout(() => {
-          if (frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
-            reject(new Error('Site blocked embedding. Enable proxy mode.'));
-          }
-        }, 8000);
+      function normalizeUrl(input) {
+        if (!input) return '';
+        if (/^https?:\/\//i.test(input)) return input;
+        if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(input) && !input.includes(' ')) {
+          return 'https://' + input;
+        }
+        return `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
+      }
 
-        frame.onload = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
-        frame.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error('Network error'));
-        };
-      });
-    }
+      function getHostname(url) {
+        try { return new URL(url).hostname; } catch { return url; }
+      }
 
-    async function loadViaProxy(url) {
-      loadingText.textContent = 'Fetching via secure proxy...';
-      
-      for (let i = 0; i < PROXY_CHAIN.length; i++) {
+      // === PAGE LOADER ===
+      async function loadPage(url) {
+        hideOverlays();
+        isLoading = true;
+        frame.src = 'about:blank';
+        
         try {
-          const proxyUrl = PROXY_CHAIN[i](url);
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000);
-          
-          const response = await fetch(proxyUrl, { 
-            method: 'GET',
-            headers: { 'Accept': 'text/html,application/xhtml+xml' },
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) continue;
-          
-          let html = await response.text();
-          html = sanitizeHtml(html, url);
-          const blob = new Blob([html], { type: 'text/html' });
-          frame.src = URL.createObjectURL(blob);
-          
-          // Auto-cleanup blob after load
-          frame.onload = () => URL.revokeObjectURL(frame.src);
-          return;
+          if (useProxy) {
+            await loadViaProxy(url);
+          } else {
+            await loadDirect(url);
+          }
         } catch (err) {
-          if (i === PROXY_CHAIN.length - 1) throw err;
+          console.warn('Load error:', err);
+          showError(err.message || 'Failed to load page. Try proxy mode.');
+        } finally {
+          isLoading = false;
+          clearTimeout(loadTimer);
         }
       }
-      throw new Error('All proxies failed');
-    }
 
-    function sanitizeHtml(html, baseUrl) {
-      // Strip blocking meta tags
-      html = html.replace(/<meta[^>]+http-equiv=["']?(X-Frame-Options|Content-Security-Policy)[^>]*>/gi, '');
-      // Remove iframe-busting scripts
-      html = html.replace(/<script[^>]*>[\s\S]*?(top\.location|window\.parent|self\s*!==\s*top)[\s\S]*?<\/script>/gi, '');
-      // Inject base tag
-      html = html.replace('<head>', `<head><base href="${baseUrl}">`);
-      // Inject navigation interceptor
-      const interceptor = `
-        <script>
-          document.addEventListener('click', function(e) {
-            const link = e.target.closest('a');
-            if (link && link.href && !link.href.startsWith('javascript:')) {
+      function loadDirect(url) {
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Load timed out. Site may block embedding.')), LOAD_TIMEOUT);
+          
+          frame.onload = () => {
+            clearTimeout(timeout);
+            // Cross-origin check fallback
+            try {
+              const doc = frame.contentDocument || frame.contentWindow.document;
+              if (!doc || doc.body.innerHTML.length < 50) {
+                reject(new Error('Site returned empty content.'));
+                return;
+              }
+            } catch (e) {
+              // Cross-origin = likely loaded successfully
+            }
+            resolve();
+          };
+          
+          frame.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Network error or blocked resource.'));
+          };
+          
+          frame.src = url;
+        });
+      }
+
+      async function loadViaProxy(url) {
+        loadingText.textContent = 'Fetching via secure proxy...';
+        
+        for (let i = 0; i < PROXY_CHAIN.length; i++) {
+          try {
+            const proxyUrl = PROXY_CHAIN[i](url);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const res = await fetch(proxyUrl, {
+              method: 'GET',
+              headers: { 'Accept': 'text/html,application/xhtml+xml' },
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            if (!res.ok) continue;
+            
+            let html = await res.text();
+            html = sanitizeAndRewrite(html, url);
+            
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            return new Promise((resolve, reject) => {
+              const t = setTimeout(() => reject(new Error('Proxy load timed out.')), LOAD_TIMEOUT);
+              frame.onload = () => { clearTimeout(t); URL.revokeObjectURL(blobUrl); resolve(); };
+              frame.onerror = () => { clearTimeout(t); reject(new Error('Proxy render failed.')); };
+              frame.src = blobUrl;
+            });
+          } catch (err) {
+            if (i === PROXY_CHAIN.length - 1) throw err;
+          }
+        }
+        throw new Error('All proxies failed.');
+      }
+
+      function sanitizeAndRewrite(html, baseUrl) {
+        try {
+          // Strip blocking headers
+          html = html.replace(/<meta[^>]+http-equiv=["']?(X-Frame-Options|Content-Security-Policy|Referrer-Policy)[^>]*>/gi, '');
+          // Remove iframe busters
+          html = html.replace(/<script[^>]*>[\s\S]*?(top\.location|window\.parent|self\s*!==\s*top|if\s*\(\s*window\s*!==\s*window\.top)[\s\S]*?<\/script>/gi, '');
+          
+          // Inject base tag
+          html = html.replace(/<head[^>]*>/i, match => `${match}<base href="${baseUrl}">`);
+          
+          // Rewrite relative URLs
+          const origin = new URL(baseUrl).origin;
+          html = html.replace(/(href|src|action|data-src|data-href)=["']([^"']+)["']/gi, (m, attr, val) => {
+            if (/^(https?:)?\/\//i.test(val)) return m;
+            if (val.startsWith('#') || val.startsWith('javascript:') || val.startsWith('data:')) return m;
+            const fixed = val.startsWith('/') ? origin + val : baseUrl.replace(/\/[^/]*$/, '/') + val;
+            return `${attr}="${fixed}"`;
+          });
+          
+          // Inject navigation interceptor
+          const interceptor = `<script>
+            document.addEventListener('click', function(e) {
+              const a = e.target.closest('a');
+              if (a && a.href && !a.href.startsWith('javascript:') && !a.href.startsWith('#')) {
+                e.preventDefault();
+                window.parent.postMessage({type:'navigate', url:a.href}, '*');
+              }
+            }, true);
+            document.addEventListener('submit', function(e) {
               e.preventDefault();
-              window.parent.postMessage({type:'navigate', url: link.href}, '*');
-            }
-          }, true);
-          document.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const url = new URL(form.action || window.location.href);
-            if (form.method.toLowerCase() === 'get') {
-              const params = new URLSearchParams(new FormData(form));
-              url.search = params.toString();
-              window.parent.postMessage({type:'navigate', url: url.toString()}, '*');
-            }
-          }, true);
-        <\/script>
-      `;
-      html = html.replace('</body>', `${interceptor}</body>`);
-      return html;
-    }
-
-    // === UI CONTROLS ===
-    backBtn.addEventListener('click', () => {
-      if (historyIndex > 0) {
-        historyIndex--;
-        currentUrl = historyStack[historyIndex];
-        urlInput.value = currentUrl;
-        navigate(currentUrl, false);
-        updateNavButtons();
+              const f = e.target;
+              const u = new URL(f.action || location.href);
+              if (f.method.toLowerCase() === 'get') {
+                u.search = new URLSearchParams(new FormData(f)).toString();
+                window.parent.postMessage({type:'navigate', url:u.toString()}, '*');
+              }
+            }, true);
+          <\/script>`;
+          html = html.replace('</body>', interceptor + '</body>');
+          
+          return html;
+        } catch (e) {
+          return html; // Fallback to raw HTML if rewrite fails
+        }
       }
-    });
 
-    fwdBtn.addEventListener('click', () => {
-      if (historyIndex < historyStack.length - 1) {
-        historyIndex++;
-        currentUrl = historyStack[historyIndex];
-        urlInput.value = currentUrl;
-        navigate(currentUrl, false);
-        updateNavButtons();
+      // === UI CONTROLS ===
+      backBtn.onclick = () => { if (historyIndex > 0) { historyIndex--; navigate(historyStack[historyIndex], false); updateNavButtons(); } };
+      fwdBtn.onclick = () => { if (historyIndex < historyStack.length - 1) { historyIndex++; navigate(historyStack[historyIndex], false); updateNavButtons(); } };
+      reloadBtn.onclick = () => { if (currentUrl) navigate(currentUrl, false); };
+      homeBtn.onclick = () => { currentUrl = ''; urlInput.value = ''; frame.src = 'about:blank'; showHome(); updateNavButtons(); };
+      
+      urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') navigate(urlInput.value); });
+      
+      modeBtn.onclick = () => {
+        useProxy = !useProxy;
+        modeBtn.classList.toggle('active', useProxy);
+        statusDot.className = `status-dot ${useProxy ? '' : 'error'}`;
+        modeBtn.querySelector('span').textContent = useProxy ? '🛡️ Proxy ON' : '🛡️ Proxy';
+        showToast(useProxy ? 'Proxy mode enabled' : 'Direct mode enabled', 'info');
+        if (currentUrl) navigate(currentUrl, false);
+      };
+
+      sidebarBtn.onclick = () => sidebar.classList.add('open');
+      sidebarClose.onclick = () => sidebar.classList.remove('open');
+      
+      tabHistory.onclick = () => {
+        tabHistory.classList.add('active'); tabHistory.style.borderBottomColor = 'var(--neon)'; tabHistory.style.color = 'var(--text)';
+        tabBookmarks.classList.remove('active'); tabBookmarks.style.borderBottomColor = 'transparent'; tabBookmarks.style.color = 'var(--text-dim)';
+        historyContent.style.display = 'block'; bookmarksContent.style.display = 'none';
+      };
+      
+      tabBookmarks.onclick = () => {
+        tabBookmarks.classList.add('active'); tabBookmarks.style.borderBottomColor = 'var(--neon)'; tabBookmarks.style.color = 'var(--text)';
+        tabHistory.classList.remove('active'); tabHistory.style.borderBottomColor = 'transparent'; tabHistory.style.color = 'var(--text-dim)';
+        bookmarksContent.style.display = 'block'; historyContent.style.display = 'none';
+      };
+
+      // === HISTORY & BOOKMARKS ===
+      function addToBrowsingHistory(url) {
+        try {
+          const title = url.includes('duckduckgo.com') ? 'Search' : getHostname(url);
+          browsingHistory = browsingHistory.filter(h => h.url !== url);
+          browsingHistory.unshift({ url, title, time: Date.now() });
+          if (browsingHistory.length > 50) browsingHistory = browsingHistory.slice(0, 50);
+          localStorage.setItem('cb_history', JSON.stringify(browsingHistory));
+          renderHistory();
+        } catch (e) { /* Storage full or disabled */ }
       }
-    });
 
-    reloadBtn.addEventListener('click', () => {
-      if (currentUrl) navigate(currentUrl, false);
-    });
-
-    homeBtn.addEventListener('click', () => {
-      currentUrl = '';
-      urlInput.value = '';
-      frame.src = 'about:blank';
-      showHome();
-      updateNavButtons();
-    });
-
-    urlInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') navigate(urlInput.value);
-    });
-
-    modeBtn.addEventListener('click', () => {
-      useProxy = !useProxy;
-      modeBtn.classList.toggle('active', useProxy);
-      statusDot.className = `status-dot ${useProxy ? '' : 'error'}`;
-      modeBtn.querySelector('span').textContent = useProxy ? '🛡️ Proxy ON' : '🛡️ Proxy';
-      showToast(useProxy ? 'Proxy mode enabled' : 'Proxy mode disabled', 'info');
-      if (currentUrl) navigate(currentUrl, false);
-    });
-
-    sidebarBtn.addEventListener('click', () => sidebar.classList.add('open'));
-    sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
-
-    tabHistory.addEventListener('click', () => {
-      tabHistory.classList.add('active'); tabHistory.style.borderBottomColor = 'var(--neon)'; tabHistory.style.color = 'var(--text)';
-      tabBookmarks.classList.remove('active'); tabBookmarks.style.borderBottomColor = 'transparent'; tabBookmarks.style.color = 'var(--text-dim)';
-      historyContent.style.display = 'block';
-      bookmarksContent.style.display = 'none';
-    });
-
-    tabBookmarks.addEventListener('click', () => {
-      tabBookmarks.classList.add('active'); tabBookmarks.style.borderBottomColor = 'var(--neon)'; tabBookmarks.style.color = 'var(--text)';
-      tabHistory.classList.remove('active'); tabHistory.style.borderBottomColor = 'transparent'; tabHistory.style.color = 'var(--text-dim)';
-      bookmarksContent.style.display = 'block';
-      historyContent.style.display = 'none';
-    });
-
-    // === HISTORY & BOOKMARKS ===
-    function addToBrowsingHistory(url) {
-      const title = url === HOME_URL ? 'Home' : new URL(url).hostname;
-      browsingHistory = browsingHistory.filter(h => h.url !== url);
-      browsingHistory.unshift({ url, title, time: Date.now() });
-      if (browsingHistory.length > 50) browsingHistory = browsingHistory.slice(0, 50);
-      localStorage.setItem('cb_history', JSON.stringify(browsingHistory));
-      renderHistory();
-    }
-
-    function renderHistory() {
-      if (browsingHistory.length === 0) {
-        historyContent.innerHTML = '<div class="empty-state">No browsing history yet.</div>';
-        return;
-      }
-      historyContent.innerHTML = browsingHistory.map(h => `
-        <div class="list-item" data-url="${h.url}">
-          <div class="item-title">${h.title}</div>
-          <div class="item-url">${h.url}</div>
-          <div class="item-actions">
-            <button class="item-btn" onclick="navigate('${h.url}')">Visit</button>
-            <button class="item-btn" onclick="addBookmark('${h.url}', '${h.title.replace(/'/g, "\\'")}')">★ Save</button>
+      function renderHistory() {
+        if (browsingHistory.length === 0) {
+          historyContent.innerHTML = '<div class="empty-state">No browsing history yet.</div>';
+          return;
+        }
+        historyContent.innerHTML = browsingHistory.map(h => `
+          <div class="list-item">
+            <div class="item-title">${escapeHtml(h.title)}</div>
+            <div class="item-url">${escapeHtml(h.url)}</div>
+            <div class="item-actions">
+              <button class="item-btn" onclick="window.navigate('${escapeAttr(h.url)}')">Visit</button>
+              <button class="item-btn" onclick="window.addBookmark('${escapeAttr(h.url)}', '${escapeAttr(h.title)}')">★ Save</button>
+            </div>
           </div>
-        </div>
-      `).join('');
-    }
-
-    function addBookmark(url, title) {
-      if (bookmarks.some(b => b.url === url)) return showToast('Already bookmarked', 'error');
-      bookmarks.push({ url, title, added: Date.now() });
-      localStorage.setItem('cb_bookmarks', JSON.stringify(bookmarks));
-      renderBookmarks();
-      showToast('★ Bookmarked', 'success');
-    }
-
-    function removeBookmark(url) {
-      bookmarks = bookmarks.filter(b => b.url !== url);
-      localStorage.setItem('cb_bookmarks', JSON.stringify(bookmarks));
-      renderBookmarks();
-      showToast('Bookmark removed');
-    }
-
-    function renderBookmarks() {
-      if (bookmarks.length === 0) {
-        bookmarksContent.innerHTML = '<div class="empty-state">No bookmarks saved.</div>';
-        return;
+        `).join('');
       }
-      bookmarksContent.innerHTML = bookmarks.map(b => `
-        <div class="list-item" data-url="${b.url}">
-          <div class="item-title">${b.title}</div>
-          <div class="item-url">${b.url}</div>
-          <div class="item-actions">
-            <button class="item-btn" onclick="navigate('${b.url}')">Visit</button>
-            <button class="item-btn" onclick="removeBookmark('${b.url}')">🗑 Remove</button>
+
+      function addBookmark(url, title) {
+        try {
+          if (bookmarks.some(b => b.url === url)) return showToast('Already bookmarked', 'error');
+          bookmarks.push({ url, title, added: Date.now() });
+          localStorage.setItem('cb_bookmarks', JSON.stringify(bookmarks));
+          renderBookmarks();
+          showToast('★ Bookmarked', 'success');
+        } catch (e) { showToast('Storage error', 'error'); }
+      }
+
+      function removeBookmark(url) {
+        bookmarks = bookmarks.filter(b => b.url !== url);
+        localStorage.setItem('cb_bookmarks', JSON.stringify(bookmarks));
+        renderBookmarks();
+        showToast('Bookmark removed');
+      }
+
+      function renderBookmarks() {
+        if (bookmarks.length === 0) {
+          bookmarksContent.innerHTML = '<div class="empty-state">No bookmarks saved.</div>';
+          return;
+        }
+        bookmarksContent.innerHTML = bookmarks.map(b => `
+          <div class="list-item">
+            <div class="item-title">${escapeHtml(b.title)}</div>
+            <div class="item-url">${escapeHtml(b.url)}</div>
+            <div class="item-actions">
+              <button class="item-btn" onclick="window.navigate('${escapeAttr(b.url)}')">Visit</button>
+              <button class="item-btn" onclick="window.removeBookmark('${escapeAttr(b.url)}')">🗑 Remove</button>
+            </div>
           </div>
-        </div>
-      `).join('');
-    }
-
-    // === OVERLAYS & HELPERS ===
-    function showHome() {
-      hideOverlays();
-      homeOverlay.classList.remove('hidden');
-    }
-
-    function showLoading(text) {
-      hideOverlays();
-      loadingText.textContent = text || 'Loading...';
-      loadingOverlay.classList.remove('hidden');
-    }
-
-    function showError(msg) {
-      hideOverlays();
-      errorText.textContent = msg || 'Failed to load page';
-      errorOverlay.classList.remove('hidden');
-    }
-
-    function hideOverlays() {
-      homeOverlay.classList.add('hidden');
-      loadingOverlay.classList.add('hidden');
-      errorOverlay.classList.add('hidden');
-    }
-
-    function updateNavButtons() {
-      backBtn.disabled = historyIndex <= 0;
-      fwdBtn.disabled = historyIndex >= historyStack.length - 1;
-    }
-
-    function retryWithProxy() {
-      useProxy = true;
-      modeBtn.classList.add('active');
-      statusDot.className = 'status-dot';
-      modeBtn.querySelector('span').textContent = '🛡️ Proxy ON';
-      if (currentUrl) navigate(currentUrl, false);
-    }
-
-    function openExternal() {
-      if (currentUrl) window.open(currentUrl, '_blank', 'noopener,noreferrer');
-    }
-
-    function extractYouTubeId(url) {
-      const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-      return match ? match[1] : null;
-    }
-
-    function showToast(msg, type = 'info') {
-      toast.textContent = msg;
-      toast.className = `toast show ${type}`;
-      setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-
-    // === GLOBAL EVENTS ===
-    window.addEventListener('message', (e) => {
-      if (e.data && e.data.type === 'navigate') {
-        navigate(e.data.url);
+        `).join('');
       }
-    });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-      if (e.key === 'Backspace' && historyIndex > 0) { e.preventDefault(); backBtn.click(); }
-      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) { e.preventDefault(); reloadBtn.click(); }
-    });
+      // === OVERLAYS & HELPERS ===
+      function showHome() { hideOverlays(); homeOverlay.classList.remove('hidden'); }
+      function showLoading(text) { hideOverlays(); loadingText.textContent = text || 'Loading...'; loadingOverlay.classList.remove('hidden'); }
+      function showError(msg) { hideOverlays(); errorText.textContent = msg || 'Failed to load'; errorOverlay.classList.remove('hidden'); }
+      function hideOverlays() { homeOverlay.classList.add('hidden'); loadingOverlay.classList.add('hidden'); errorOverlay.classList.add('hidden'); }
+      function updateNavButtons() { backBtn.disabled = historyIndex <= 0; fwdBtn.disabled = historyIndex >= historyStack.length - 1; }
+      
+      window.retryWithProxy = function() {
+        useProxy = true;
+        modeBtn.classList.add('active');
+        statusDot.className = 'status-dot';
+        modeBtn.querySelector('span').textContent = '🛡️ Proxy ON';
+        if (currentUrl) navigate(currentUrl, false);
+      };
+      
+      window.openExternal = function() {
+        if (currentUrl) window.open(currentUrl, '_blank', 'noopener,noreferrer');
+      };
 
-    // Expose to global for inline handlers
-    window.navigate = navigate;
-    window.openExternal = openExternal;
-    window.retryWithProxy = retryWithProxy;
-    window.addBookmark = addBookmark;
-    window.removeBookmark = removeBookmark;
+      window.navigate = navigate;
+      window.addBookmark = addBookmark;
+      window.removeBookmark = removeBookmark;
+
+      // === ABOUT:BLANK CLOAKING ===
+      $('cloak-btn').onclick = function() {
+        try {
+          const w = window.open('about:blank', '_blank');
+          if (!w) return showToast('Pop-up blocked. Allow pop-ups for this site.', 'error');
+          
+          w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Crown Browser</title></head><body style="margin:0;background:#030306;"><div id="loader" style="display:flex;align-items:center;justify-content:center;height:100vh;color:#00d2ff;font-family:sans-serif;font-size:22px;">🔒 Cloaking...</div></body></html>`);
+          w.document.close();
+          
+          // Inject full app
+          const appHtml = document.documentElement.outerHTML;
+          w.document.open();
+          w.document.write(appHtml);
+          w.document.close();
+          
+          window.close();
+        } catch (e) {
+          showToast('Cloaking failed: ' + e.message, 'error');
+        }
+      };
+
+      // === MESSAGE LISTENER ===
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'navigate' && e.data.url) {
+          navigate(e.data.url);
+        }
+      });
+
+      // === KEYBOARD SHORTCUTS ===
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+        if (e.key === 'Backspace' && historyIndex > 0) { e.preventDefault(); backBtn.click(); }
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) { e.preventDefault(); reloadBtn.click(); }
+        if (e.key === 'Escape') sidebar.classList.remove('open');
+      });
+
+      // === UTILS ===
+      function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+      function escapeAttr(str) { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+      function showToast(msg, type = 'info') {
+        toast.textContent = msg;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => toast.classList.remove('show'), 2500);
+      }
+
+    })();
   </script>
 </body>
 </html>
