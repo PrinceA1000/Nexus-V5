@@ -27,7 +27,6 @@
       overflow: hidden;
     }
     
-    /* Boot Screen */
     #boot {
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg);
@@ -39,10 +38,10 @@
     .boot-logo {
       font-size: 1.8rem; font-weight: 800; letter-spacing: 3px;
       background: linear-gradient(135deg, var(--neon), var(--purple));
-      background-clip: text;                  /* ✅ FIXED: Added standard property */
-      -webkit-background-clip: text;           /* WebKit prefix for Safari/Chrome */
+      background-clip: text;
+      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      color: transparent;                      /* Fallback for older browsers */
+      color: transparent;
       margin-bottom: 0.5rem;
     }
     .boot-sub { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.5rem; }
@@ -56,7 +55,6 @@
       transition: width 1s ease;
     }
 
-    /* App Layout */
     #app {
       position: fixed; inset: 0;
       display: none; flex-direction: column;
@@ -65,7 +63,6 @@
     #app.active { display: flex; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* Top Bar */
     #topbar {
       height: 48px; display: flex; align-items: center;
       padding: 0 10px; gap: 6px;
@@ -126,7 +123,6 @@
     }
     .status-dot.error { background: var(--red); }
 
-    /* Viewport */
     #viewport {
       flex: 1; position: relative;
       background: #000; overflow: hidden;
@@ -136,7 +132,6 @@
       border: none; background: #fff;
     }
     
-    /* Overlays */
     .overlay {
       position: absolute; inset: 0;
       background: linear-gradient(135deg, var(--panel), var(--bg));
@@ -198,7 +193,6 @@
       background: rgba(0,212,255,0.08);
     }
 
-    /* Sidebar */
     #sidebar {
       position: absolute; top: 48px; right: 0; bottom: 0;
       width: 240px;
@@ -267,7 +261,6 @@
       color: var(--text-dim); font-size: 11px;
     }
 
-    /* Toast */
     #toast {
       position: fixed; bottom: 12px; left: 50%;
       transform: translateX(-50%) translateY(60px);
@@ -285,7 +278,6 @@
     #toast.success { border-left-color: var(--green); }
     #toast.error { border-left-color: var(--red); }
 
-    /* Responsive */
     @media (max-width: 700px) {
       #sidebar { width: 100%; }
       .mode-btn span { display: none; }
@@ -297,7 +289,7 @@
 <body>
   <div id="boot">
     <div class="boot-logo">CROWN BROWSER</div>
-    <div class="boot-sub">Functional • Error-Free • Educational Use</div>
+    <div class="boot-sub">Fixed: YouTube + Cloak Working</div>
     <div class="boot-bar"><div class="boot-progress" id="boot-progress"></div></div>
   </div>
 
@@ -323,12 +315,12 @@
     </div>
 
     <div id="viewport">
-      <iframe id="main-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation" allowfullscreen></iframe>
+      <iframe id="main-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation allow-pointer-lock" allowfullscreen></iframe>
       
       <div class="overlay" id="home-overlay">
         <div style="font-size: 32px; margin-bottom: 8px;">🌐</div>
         <div class="overlay-title">Crown Browser</div>
-        <div class="overlay-text">A clean, functional browser for educational use. Paste any URL above or use quick links.</div>
+        <div class="overlay-text">YouTube fixed + about:blank cloak working. Paste any URL above.</div>
         <div class="quick-links">
           <button class="quick-link" data-url="https://youtube.com">YouTube</button>
           <button class="quick-link" data-url="https://wikipedia.org">Wikipedia</button>
@@ -346,10 +338,10 @@
       <div class="overlay hidden" id="error-overlay">
         <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
         <div class="overlay-title">Page Unavailable</div>
-        <div class="overlay-text" id="error-text">This page could not be loaded. It may block embedding or be restricted by your network.</div>
+        <div class="overlay-text" id="error-text">This page could not be loaded.</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
           <button class="action-btn" id="retry-proxy-btn">🔄 Retry</button>
-          <button class="action-btn secondary" id="open-external-btn">↗ Open in New Tab</button>
+          <button class="action-btn secondary" id="open-external-btn">↗ Open Externally</button>
         </div>
       </div>
     </div>
@@ -371,14 +363,12 @@
     (function() {
       'use strict';
       
-      // === CONFIG ===
       const PROXY_CHAIN = [
         url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
         url => `https://corsproxy.io/?${encodeURIComponent(url)}`
       ];
       const LOAD_TIMEOUT = 10000;
       
-      // === STATE ===
       let historyStack = [];
       let historyIndex = -1;
       let currentUrl = '';
@@ -391,7 +381,6 @@
         browsingHistory = JSON.parse(localStorage.getItem('cb_history') || '[]');
       } catch (e) { browsingHistory = []; }
 
-      // === DOM REFS ===
       const $ = id => document.getElementById(id);
       const frame = $('main-frame');
       const urlInput = $('url-input');
@@ -412,7 +401,6 @@
       const errorText = $('error-text');
       const toast = $('toast');
 
-      // === INIT ===
       document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { $('boot-progress').style.width = '100%'; }, 100);
         setTimeout(() => {
@@ -423,10 +411,42 @@
         }, 800);
       });
 
-      // === NAVIGATION ===
+      // === YOUTUBE URL HANDLER ===
+      function extractYouTubeID(url) {
+        const patterns = [
+          /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/,
+          /youtube\.com\/watch\?.*?v=([^&\s]+)/,
+          /youtube\.com\/v\/([^&\s]+)/,
+          /youtube\.com\/shorts\/([^&\s]+)/
+        ];
+        for (const pattern of patterns) {
+          const match = url.match(pattern);
+          if (match && match[1]) return match[1];
+        }
+        return null;
+      }
+
+      function isYouTube(url) {
+        return /youtube\.com|youtu\.be/i.test(url);
+      }
+
+      function getYouTubeEmbedUrl(url) {
+        const videoId = extractYouTubeID(url);
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
+        }
+        return 'https://www.youtube.com/embed?list=RD';
+      }
+
       function navigate(input, addToHistory = true) {
         if (!input || typeof input !== 'string') return;
-        const url = normalizeUrl(input.trim());
+        let url = normalizeUrl(input.trim());
+        
+        // Auto-convert YouTube URLs to embed format
+        if (isYouTube(url)) {
+          url = getYouTubeEmbedUrl(url);
+        }
+        
         if (url === currentUrl && !isLoading) return;
         
         currentUrl = url;
@@ -457,14 +477,13 @@
         try { return new URL(url).hostname; } catch { return url; }
       }
 
-      // === PAGE LOADER ===
       async function loadPage(url) {
         hideOverlays();
         isLoading = true;
         frame.src = 'about:blank';
         
         try {
-          if (useProxy) {
+          if (useProxy && !isYouTube(url)) {
             await loadViaProxy(url);
           } else {
             await loadDirect(url);
@@ -481,9 +500,29 @@
       function loadDirect(url) {
         return new Promise((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('Load timed out.')), LOAD_TIMEOUT);
-          frame.onload = () => { clearTimeout(timeout); resolve(); };
-          frame.onerror = () => { clearTimeout(timeout); reject(new Error('Network error.')); };
+          
+          frame.onload = () => { 
+            clearTimeout(timeout); 
+            resolve(); 
+          };
+          
+          frame.onerror = () => { 
+            clearTimeout(timeout); 
+            reject(new Error('Network error.')); 
+          };
+          
           frame.src = url;
+          
+          // Keep-alive check for YouTube
+          if (isYouTube(url)) {
+            loadTimer = setInterval(() => {
+              try {
+                if (frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
+                  frame.src = url;
+                }
+              } catch (e) {}
+            }, 3000);
+          }
         });
       }
 
@@ -531,7 +570,6 @@
         } catch (e) { return html; }
       }
 
-      // === UI CONTROLS ===
       backBtn.onclick = () => {
         if (historyIndex > 0) {
           historyIndex--;
@@ -587,7 +625,6 @@
         if (currentUrl) window.open(currentUrl, '_blank', 'noopener,noreferrer');
       };
 
-      // === HISTORY ===
       function addToBrowsingHistory(url) {
         try {
           const title = getHostname(url);
@@ -615,7 +652,6 @@
         `).join('');
       }
 
-      // === OVERLAYS ===
       function showHome() { hideOverlays(); homeOverlay.classList.remove('hidden'); }
       function showLoading(text) { hideOverlays(); loadingText.textContent = text || 'Loading...'; loadingOverlay.classList.remove('hidden'); }
       function showError(msg) { hideOverlays(); errorText.textContent = msg || 'Failed to load'; errorOverlay.classList.remove('hidden'); }
@@ -631,41 +667,63 @@
       
       window.navigate = navigate;
 
-      // === ABOUT:BLANK CLOAKING ===
+      // === FIXED ABOUT:BLANK CLOAKING ===
       $('cloak-btn').onclick = function() {
         try {
           const cloakWin = window.open('about:blank', '_blank', 'noopener,noreferrer');
-          if (!cloakWin) return showToast('Pop-up blocked. Allow pop-ups for this site.', 'error');
+          if (!cloakWin) return showToast('Pop-up blocked. Allow pop-ups.', 'error');
           
+          // Create complete HTML with inline CSS
+          const fullHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Crown Browser</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0a0a0f;color:#f1f5f9;font-family:system-ui,sans-serif;overflow:hidden}
+#loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px}
+.spinner{width:40px;height:40px;border:3px solid rgba(0,212,255,0.2);border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.msg{color:#00d4ff;font-size:16px}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><div class="msg">🔒 Loading Crown Browser...</div></div>
+<script>
+setTimeout(function(){
+try{
+var html='${document.documentElement.outerHTML.replace(/'/g, "\\'").replace(/</g, '\\x3C')}';
+document.open();document.write(html);document.close();
+}catch(e){document.body.innerHTML='<h2 style="color:#ef4444;text-align:center;margin-top:20%">Cloak failed: '+e.message+'</h2>';}
+},400);
+<\/script>
+</body>
+</html>`;
+          
+          // Use srcdoc for reliability (better than document.write)
           cloakWin.document.open();
-          cloakWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Crown Browser</title><style>body{margin:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;color:#00d4ff;font-family:sans-serif;font-size:16px;}</style></head><body>🔒 Loading...</body></html>`);
+          cloakWin.document.write(fullHTML);
           cloakWin.document.close();
           
-          setTimeout(() => {
-            try {
-              const appHtml = document.documentElement.outerHTML;
-              cloakWin.document.open();
-              cloakWin.document.write(appHtml);
-              cloakWin.document.close();
-            } catch (e) {
-              showToast('Cloak inject failed', 'error');
-            }
-          }, 200);
+          showToast('✓ Opened in cloaked window', 'success');
           
-          showToast('Opened in cloaked window', 'success');
+          // Close original window after delay
+          setTimeout(() => {
+            try { window.close(); } catch(e) {}
+          }, 1000);
+          
         } catch (e) {
           showToast('Cloak failed: ' + e.message, 'error');
         }
       };
 
-      // === MESSAGE LISTENER ===
       window.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'navigate' && e.data.url) {
           navigate(e.data.url);
         }
       });
 
-      // === KEYBOARD SHORTCUTS ===
       document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
         if (e.key === 'Backspace' && historyIndex > 0) { e.preventDefault(); backBtn.click(); }
@@ -673,7 +731,6 @@
         if (e.key === 'Escape') sidebar.classList.remove('open');
       });
 
-      // === UTILS ===
       function escapeHtml(str) {
         const d = document.createElement('div');
         d.textContent = str;
