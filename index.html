@@ -39,7 +39,10 @@
     .boot-logo {
       font-size: 1.8rem; font-weight: 800; letter-spacing: 3px;
       background: linear-gradient(135deg, var(--neon), var(--purple));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;                  /* ✅ FIXED: Added standard property */
+      -webkit-background-clip: text;           /* WebKit prefix for Safari/Chrome */
+      -webkit-text-fill-color: transparent;
+      color: transparent;                      /* Fallback for older browsers */
       margin-bottom: 0.5rem;
     }
     .boot-sub { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.5rem; }
@@ -217,20 +220,6 @@
       background: none; border: none;
       color: var(--text); cursor: pointer;
       font-size: 16px; padding: 0 4px;
-    }
-    .sidebar-tabs {
-      display: flex; border-bottom: 1px solid var(--border);
-    }
-    .tab {
-      flex: 1; padding: 10px; text-align: center;
-      cursor: pointer; font-size: 11px; font-weight: 600;
-      border-bottom: 2px solid transparent;
-      transition: 0.2s;
-    }
-    .tab:hover { background: rgba(255,255,255,0.04); }
-    .tab.active {
-      border-bottom-color: var(--neon);
-      color: var(--neon);
     }
     .sidebar-content {
       flex: 1; overflow-y: auto; padding: 10px;
