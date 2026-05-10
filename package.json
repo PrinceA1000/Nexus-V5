@@ -2,11 +2,8 @@
   "dependencies": {
     "compression": "^1.8.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "lru-cache": "^11.3.6",
-    "undici": "^8.2.0"
-  },
-  "devDependencies": {
-    "node-fetch": "^3.3.2"
+    "express": "^4.21.2",
+    "lru-cache": "^11.0.0",
+    "undici": "^8.3.0"
   }
 }
