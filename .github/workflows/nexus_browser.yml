@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   crown-browser:
@@ -25,7 +24,10 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: npm ci || npm install
+        # 🔁 Use npm install (no lockfile required) and install puppeteer explicitly
+        run: |
+          npm install
+          npm install puppeteer puppeteer-extra puppeteer-extra-plugin-proxy@2.5.5 chalk cli-progress dotenv
 
       - name: Generate proxy list from env
         run: |
@@ -55,7 +57,7 @@ jobs:
       - name: Commit status (optional)
         if: always()
         run: |
-          echo "Crown Nexus run status: ${{ env.status }}"
+          echo "Crown Nexus run status: ${{ env.status || '⚠️ Unknown (previous step failed)' }}"
           if [ "${{ env.exit_code }}" = "0" ]; then
             echo "✅ Workflow succeeded"
           else
