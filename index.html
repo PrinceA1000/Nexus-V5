@@ -204,7 +204,7 @@
       border-radius: var(--r);
       color: var(--cyan);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      font-size: 12px;
       outline: none;
       transition: border-color .2s, box-shadow .2s;
     }
@@ -213,7 +213,7 @@
       box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.12);
     }
     #url::placeholder {
-      color: var(--muted);
+      color: var(--dim);
     }
     .addr-ic {
       position: absolute;
@@ -602,7 +602,7 @@
 
   <div id="boot">
     <div class="b-logo">NEXUS</div>
-    <div class="b-sub">CROWN · v4.6 · REVAMPED</div>
+    <div class="b-sub">CROWN · v5.0 · UTOPIA-STYLE</div>
     <div class="b-track"><div class="b-fill" id="bfill"></div></div>
   </div>
 
@@ -629,7 +629,7 @@
       <button class="ico" id="btn-home" title="Home">⌂</button>
 
       <div class="addr">
-        <input id="url" type="text" placeholder="Search or enter URL..." spellcheck="false" autocomplete="off" />
+        <input id="url" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off" />
         <span class="addr-ic">&#128269;</span>
       </div>
 
@@ -671,11 +671,10 @@
     (function() {
       'use strict';
 
-      /* ===== PROXIES (only reliable ones) ===== */
+      /* ===== PROXY SOURCES ===== */
       const PROXIES = [
         u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-        u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
       ];
 
       /* ===== DOM REFS ===== */
@@ -699,8 +698,6 @@
       try { bms = JSON.parse(localStorage.getItem('cr_bm') || '[]'); } catch {}
 
       /* ===== UTILITIES ===== */
-      function enc(u) { return encodeURIComponent(u); }
-
       function mk(id, title, url) {
         return { id, title, url, stack: [], si: -1 };
       }
@@ -711,25 +708,39 @@
         try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u.slice(0, 30); }
       }
 
-      function esc(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;');
-      }
-
-      /* ===== NORMALIZE INPUT & SEARCH (fixed) ===== */
       function norm(input) {
         let raw = input.trim();
         if (!raw) return '';
 
-        // If it's already a valid URL, return it
+        // If it's already a URL, return it
         if (/^https?:\/\//i.test(raw)) return raw;
 
-        // If it looks like a domain (contains dot and no spaces), add https
+        // If it looks like a domain, add https
         if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
           return 'https://' + raw;
 
-        // Otherwise treat as search query → DuckDuckGo Lite (no CAPTCHA, iframe friendly)
-        return `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(raw)}`;
+        // Search using Brave (no CAPTCHA, works in iframe)
+        return `https://search.brave.com/search?q=${encodeURIComponent(raw)}`;
+      }
+
+      function shouldFallbackToNewWindow(url) {
+        try {
+          const host = new URL(url).hostname;
+          const blocked = [
+            'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+            'reddit.com', 'instagram.com', 'facebook.com',
+            'tiktok.com', 'twitch.tv', 'discord.com',
+            'crunchyroll.com', 'animepahe.ch', 'anikai.to'
+          ];
+          return blocked.some(d => host.includes(d));
+        } catch {
+          return false;
+        }
+      }
+
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
       }
 
       /* ===== BOOT ===== */
@@ -776,7 +787,7 @@
         iframe.className = 'tab-iframe';
         iframe.dataset.tab = tab.id;
         iframe.allow = 'camera; microphone; geolocation; fullscreen';
-        iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
+        iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation';
         viewport.appendChild(iframe);
         tab._iframe = iframe;
 
@@ -792,14 +803,14 @@
               if (el && el.href) {
                 e.preventDefault();
                 const href = el.href;
-                if (href.startsWith('http')) {
+                if (href.startsWith('http') && !href.startsWith('https://search.brave.com')) {
                   const curTab = cur();
                   if (curTab) navigateTab(curTab, href);
                 }
               }
             }, true);
           } catch (err) {
-            // cross-origin
+            // cross-origin — ignore
           }
         });
       }
@@ -855,10 +866,32 @@
         } catch (err) {}
       }
 
-      /* ===== NAVIGATION ENGINE (with CAPTCHA detection) ===== */
+      /* ===== NAVIGATION ENGINE (Utopia-style) ===== */
       function navigateTab(tab, input) {
         const finalUrl = norm(input);
         if (!finalUrl) return;
+
+        // Handle YouTube: open in new window directly (works better than embed)
+        if (shouldFallbackToNewWindow(finalUrl)) {
+          const w = window.open(finalUrl, '_blank', 'width=1000,height=750,menubar=yes,location=yes,status=yes');
+          if (!w) {
+            toast('Popup blocked. Please allow pop-ups for YouTube & similar sites.', 'err');
+          } else {
+            toast('Opened in new window (site blocks iframes)', 'inf');
+            // Keep tab as-is but show a placeholder
+            tab.url = finalUrl;
+            tab.title = getHost(finalUrl);
+            if (tabs.indexOf(tab) === act) {
+              urlBar.value = finalUrl;
+            }
+            renderTabs();
+            navBtns();
+            addHist(finalUrl);
+            // Show informative message in iframe
+            showFallbackMessage(tab, finalUrl, 'Opened in new window');
+          }
+          return;
+        }
 
         tab.url = finalUrl;
         tab.title = getHost(finalUrl);
@@ -875,50 +908,31 @@
           createIframeForTab(tab);
         }
 
-        // Determine load URL
+        // Determine load URL (use proxy if enabled and not a search engine)
         let loadUrl = finalUrl;
-
-        // Use proxy only if it's a external website (not search engine)
-        if (proxyOn && !finalUrl.startsWith('https://lite.duckduckgo.com/')) {
+        if (proxyOn && !finalUrl.startsWith('https://search.brave.com/')) {
           const proxyFn = PROXIES[Math.floor(Math.random() * PROXIES.length)];
           loadUrl = proxyFn(finalUrl);
         }
 
-        // Special case: YouTube embed (able to work in iframe)
-        if (finalUrl.includes('youtube.com/watch') || finalUrl.includes('youtu.be/')) {
-          const videoId = finalUrl.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
-          if (videoId) {
-            loadUrl = `https://www.youtube.com/embed/${videoId[1]}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
-          }
-        }
-
         iframe.src = loadUrl;
-        iframe.onload = null; // Remove old handler to avoid multiple triggers
 
-        // Error detection after load
-        let errorTimeout = setTimeout(() => {
-          handleIframeError(tab, finalUrl);
-        }, 15000);
-
-        iframe.onload = function() {
-          clearTimeout(errorTimeout);
-          // Try to detect CAPTCHA or error page inside iframe
+        // Error detection with timeout
+        let loadTimer = setTimeout(() => {
           try {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (doc) {
-              const bodyText = doc.body?.innerText || '';
-              if (bodyText.includes('Invalid domain for site key') || 
-                  bodyText.includes('ERROR for site owner') ||
-                  bodyText.includes('Cloudflare') ||
-                  bodyText.includes('captcha')) {
-                // CAPTCHA detected — replace with clean error
-                showSearchError(tab, finalUrl);
-                return;
-              }
+            if (!doc || doc.URL === 'about:blank' || doc.URL === loadUrl && !doc.body?.innerHTML.trim()) {
+              // If failed, show fallback button
+              showFallbackMessage(tab, finalUrl, 'Site failed to load. Open in new window?');
             }
           } catch (err) {
-            // Cross-origin or no access — likely a valid page, do nothing
+            // cross-origin or failed
+            showFallbackMessage(tab, finalUrl, 'Site cannot be embedded. Open in new window?');
           }
+        }, 12000);
+
+        iframe.onload = function() {
+          clearTimeout(loadTimer);
         };
 
         // Update UI
@@ -933,8 +947,8 @@
         iframe.classList.add('active');
       }
 
-      /* ===== SEARCH ERROR PAGE (CAPTCHA fallback) ===== */
-      function showSearchError(tab, originalUrl) {
+      /* ===== FALLBACK MESSAGE (instead of raw HTML errors) ===== */
+      function showFallbackMessage(tab, originalUrl, message) {
         const iframe = tab._iframe;
         if (!iframe) return;
         try {
@@ -942,7 +956,7 @@
           if (!doc) return;
           doc.open();
           doc.write(`
-            <html><head><title>Search Blocked</title>
+            <html><head><title>${esc(originalUrl)}</title>
             <style>
               body {
                 background: #0c0c1e;
@@ -956,43 +970,33 @@
                 margin: 0;
                 padding: 20px;
               }
-              .error-box {
+              .box {
                 max-width: 500px;
                 text-align: center;
               }
-              h1 {
-                font-size: 1.8rem;
-                color: var(--red);
-              }
-              p {
-                color: var(--dim);
-                margin: 12px 0;
-              }
+              h2 { font-size: 1.5rem; color: var(--cyan); margin-bottom: 8px; }
+              p { color: var(--dim); margin: 8px 0; }
               button {
                 padding: 8px 20px;
-                margin: 4px;
-                background: rgba(0, 210, 255, 0.08);
+                margin: 6px;
+                background: rgba(0,210,255,0.08);
                 border: 1px solid var(--border);
                 border-radius: 6px;
                 color: var(--cyan);
                 cursor: pointer;
                 transition: .2s;
+                font-size: 13px;
               }
-              button:hover {
-                background: var(--cyan);
-                color: #000;
-              }
+              button:hover { background: var(--cyan); color: #000; }
             </style>
             </head>
             <body>
-            <div class="error-box">
-              <h1>⛔ Search Blocked</h1>
-              <p>The search engine detected a CAPTCHA or invalid domain key.</p>
-              <p><strong>Use one of these alternatives:</strong></p>
+            <div class="box">
+              <h2>⬡ Crown Nexus</h2>
+              <p><strong>${esc(message)}</strong></p>
+              <p>${esc(originalUrl)}</p>
               <div>
-                <button onclick="window.open('https://duckduckgo.com/?q=${encodeURIComponent(originalUrl.replace('https://lite.duckduckgo.com/lite/?q=', ''))}', '_blank')">
-                  Open Search in New Window
-                </button>
+                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in New Window</button>
                 <button onclick="window.location.reload()">Retry</button>
               </div>
             </div>
@@ -1000,75 +1004,7 @@
           `);
           doc.close();
         } catch (err) {}
-        toast('Search triggered CAPTCHA protection. Try opening in new window.', 'inf');
-      }
-
-      /* ===== GENERIC ERROR PAGE ===== */
-      function handleIframeError(tab, originalUrl) {
-        const iframe = tab._iframe;
-        if (!iframe) return;
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          if (!doc) return;
-          // Only show error if still blank or error
-          const bodyText = doc.body?.innerText || '';
-          if (bodyText.includes('Invalid domain') || bodyText.includes('ERROR for site owner')) {
-            showSearchError(tab, originalUrl);
-          } else if (!doc.body?.innerHTML || doc.body.innerHTML.trim() === '') {
-            // Dead page
-            doc.open();
-            doc.write(`
-              <html><head><title>Page Unreachable</title>
-              <style>
-                body {
-                  background: #0c0c1e;
-                  color: #e0efff;
-                  font-family: 'Nunito', sans-serif;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  flex-direction: column;
-                  height: 100vh;
-                  margin: 0;
-                  padding: 20px;
-                }
-                .error-box {
-                  max-width: 500px;
-                  text-align: center;
-                }
-                h1 {
-                  font-size: 1.8rem;
-                  color: var(--dim);
-                }
-                button {
-                  padding: 8px 20px;
-                  margin: 4px;
-                  background: rgba(0, 210, 255, 0.08);
-                  border: 1px solid var(--border);
-                  border-radius: 6px;
-                  color: var(--cyan);
-                  cursor: pointer;
-                  transition: .2s;
-                }
-                button:hover {
-                  background: var(--cyan);
-                  color: #000;
-                }
-              </style>
-              </head>
-              <body>
-              <div class="error-box">
-                <h1>⛔ Page Unreachable</h1>
-                <p>Could not load <strong>${esc(originalUrl)}</strong>.</p>
-                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in new window</button>
-              </div>
-              </body></html>
-            `);
-            doc.close();
-          }
-        } catch (err) {
-          // cross-origin, ignore
-        }
+        toast(message, 'inf');
       }
 
       /* ===== SWITCH TAB ===== */
