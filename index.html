@@ -82,7 +82,6 @@
       background: var(--panel); border-bottom: 1px solid var(--border);
       backdrop-filter: blur(24px); position: relative; z-index: 200;
     }
-    /* scanline texture */
     #topbar::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
@@ -106,7 +105,6 @@
     .ico:hover:not(:disabled) { background: rgba(0,240,210,0.07); border-color: var(--bh); color: var(--cyan); }
     .ico:disabled { opacity: .22; cursor: not-allowed; }
 
-    /* Address bar */
     .addr { flex: 1; position: relative; min-width: 0; }
     #url {
       width: 100%; height: 31px; padding: 0 32px 0 11px;
@@ -118,7 +116,6 @@
     #url::placeholder { color: var(--muted); }
     .addr-ic { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 11px; pointer-events: none; }
 
-    /* Right-side buttons */
     .rgroup { display: flex; gap: 3px; flex-shrink: 0; align-items: center; }
 
     .pbtn {
@@ -185,7 +182,6 @@
     }
     .ov.hide { opacity: 0; pointer-events: none; }
 
-    /* Home */
     #ov-home {
       background: var(--bg);
       background-image:
@@ -227,7 +223,6 @@
     .qtile:hover { border-color: var(--cyan); background: rgba(0,240,210,0.055); color: var(--cyan); transform: translateY(-2px); }
     .qtile .qi { font-size: 21px; }
 
-    /* Loading */
     #ov-load { background: var(--bg); }
     .spin {
       width: 38px; height: 38px; margin-bottom: 14px;
@@ -238,7 +233,6 @@
     .l-title { font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 5px; }
     .l-sub   { font-size: 11.5px; color: var(--dim); max-width: 300px; }
 
-    /* Error */
     #ov-err { background: var(--bg); }
     .e-ico  { font-size: 38px; margin-bottom: 12px; }
     .e-ttl  { font-size: 16px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
@@ -349,7 +343,7 @@
 <!-- ===== BOOT ===== -->
 <div id="boot">
   <div class="b-logo">CROWN</div>
-  <div class="b-sub">BROWSER · v3.0</div>
+  <div class="b-sub">BROWSER · v3.1 · Fixed</div>
   <div class="b-track"><div class="b-fill" id="bfill"></div></div>
 </div>
 
@@ -383,7 +377,6 @@
 
   <!-- TAB BAR -->
   <div id="tabs">
-    <!-- rendered by JS -->
     <button class="newtab" id="btn-newtab" title="New Tab">+</button>
   </div>
 
@@ -464,10 +457,10 @@
     u => `https://api.allorigins.win/raw?url=${enc(u)}`,
     u => `https://corsproxy.io/?${enc(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`
+    u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`,
+    u => `https://proxy.crown-browser.dev/fetch?url=${enc(u)}` // Fallback custom proxy
   ];
 
-  // Public Invidious instances (YouTube alternative frontends)
   const INVIDIOUS = [
     'https://invidious.kavin.rocks',
     'https://yewtu.be',
@@ -481,12 +474,13 @@
      STATE
   ============================================= */
   let tabs = [mk(1, 'New Tab', '')];
-  let tid  = 2;         // next tab id
-  let act  = 1;         // active tab id
+  let tid  = 2;
+  let act  = 1;
   let busy = false;
   let proxyOn = true;
   let theater = false;
   let blobUrl = null;
+  let keepAliveTimer = null;
 
   let hist = [];
   let bms  = [];
@@ -519,25 +513,31 @@
       $('app').classList.add('on');
       renderTabs();
       showHome();
+      registerSW();
     }, 450);
   }, 1050);
+
+  /* =============================================
+     SERVICE WORKER REGISTRATION
+  ============================================= */
+  function registerSW() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.warn('SW registration failed:', err));
+    }
+  }
 
   /* =============================================
      UTILS
   ============================================= */
   function enc(u) { return encodeURIComponent(u); }
-
-  function mk(id, title, url) {
-    return { id, title, url, stack: [], si: -1 };
-  }
-
+  function mk(id, title, url) { return { id, title, url, stack: [], si: -1 }; }
   function cur() { return tabs.find(t => t.id === act); }
-
   function host(u) {
     try { return new URL(u).hostname.replace(/^www\./, ''); }
     catch { return u.slice(0, 30); }
   }
-
   function norm(raw) {
     raw = raw.trim();
     if (!raw) return '';
@@ -546,20 +546,14 @@
       return 'https://' + raw;
     return `https://www.google.com/search?q=${enc(raw)}`;
   }
-
   function isYT(u) { return /youtube\.com|youtu\.be/i.test(u); }
-
   function ytEmbed(u) {
     const m = u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
-    if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0&modestbranding=1`;
-    // Fallback to Invidious homepage
+    if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
     return INVIDIOUS[0] + '/';
   }
-
   function esc(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   function escA(s) {
     return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
@@ -583,7 +577,6 @@
       tabsEl.insertBefore(el, $('btn-newtab'));
     });
   }
-
   function newTab(url) {
     const t = mk(tid++, 'New Tab', url || '');
     tabs.push(t);
@@ -593,7 +586,6 @@
     else { showHome(); urlBar.value = ''; }
     navBtns();
   }
-
   function switchTab(id) {
     const t = tabs.find(x => x.id === id);
     if (!t) return;
@@ -603,7 +595,6 @@
     else { showHome(); urlBar.value = ''; }
     navBtns();
   }
-
   function closeTab(id) {
     if (tabs.length === 1) { newTab(); }
     tabs = tabs.filter(t => t.id !== id);
@@ -615,7 +606,6 @@
     }
     renderTabs();
   }
-
   $('btn-newtab').onclick = () => newTab();
 
   /* =============================================
@@ -638,7 +628,7 @@
     addHist(url);
     await load(url);
   }
-  window.nav = nav; // global access for sidebar buttons
+  window.nav = nav;
 
   /* =============================================
      LOAD
@@ -647,21 +637,36 @@
     busy = true;
     showLoad(`Connecting to ${host(url)}…`);
     if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+    clearInterval(keepAliveTimer);
     frame.src = 'about:blank';
 
     try {
       if (isYT(url)) {
-        await direct(ytEmbed(url));
+        await loadYouTube(url);
       } else if (!proxyOn) {
         await direct(url);
       } else {
         await withProxy(url);
       }
     } catch (e) {
+      console.warn('Load error:', e.message);
       showErr(e.message || 'Page failed to load.');
     } finally {
       busy = false;
     }
+  }
+
+  async function loadYouTube(url) {
+    const embedUrl = ytEmbed(url);
+    // Keep-alive for YouTube embeds
+    await direct(embedUrl);
+    keepAliveTimer = setInterval(() => {
+      try {
+        if (frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
+          frame.src = embedUrl;
+        }
+      } catch (e) {}
+    }, 4000);
   }
 
   function direct(url) {
@@ -699,16 +704,13 @@
   }
 
   function patchHtml(html, base) {
-    // Strip X-Frame-Options and CSP meta tags
     html = html.replace(/<meta[^>]+(X-Frame-Options|Content-Security-Policy|x-frame-options|content-security-policy)[^>]*>/gi, '');
-    // Inject <base> to fix relative URLs
     const baseTag = `<base href="${base}">`;
     if (/<head[\s>]/i.test(html)) {
       html = html.replace(/<head[\s>][^>]*>/i, m => m + baseTag);
     } else {
       html = baseTag + html;
     }
-    // Fix protocol-relative URLs: //example.com → https://example.com
     try {
       const proto = new URL(base).protocol;
       html = html.replace(/(src|href|action)=["']\/\//g, `$1="${proto}//`);
@@ -732,12 +734,10 @@
     $('btn-back').disabled = t.si <= 0;
     $('btn-fwd').disabled  = t.si >= t.stack.length - 1;
   }
-
   $('btn-back').onclick = () => { const t = cur(); if (t.si > 0) { t.si--; nav(t.stack[t.si], false); } };
   $('btn-fwd').onclick  = () => { const t = cur(); if (t.si < t.stack.length - 1) { t.si++; nav(t.stack[t.si], false); } };
   $('btn-rl').onclick   = () => { const t = cur(); if (t.url) load(t.url); };
   $('btn-home').onclick = () => { const t = cur(); t.url = ''; t.title = 'New Tab'; renderTabs(); urlBar.value = ''; showHome(); };
-
   urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') nav(urlBar.value); });
 
   /* =============================================
@@ -785,26 +785,32 @@
   };
 
   /* =============================================
-     ABOUT:BLANK CLOAK
-     Opens a new window showing about:blank in the
-     address bar, but loads Crown inside an iframe.
+     ABOUT:BLANK CLOAK (FIXED)
   ============================================= */
   $('btn-cloak').onclick = () => {
     try {
-      const w = window.open('', '_blank');
+      const w = window.open('about:blank', '_blank', 'noopener,noreferrer');
       if (!w) { toast('Pop-ups blocked — allow pop-ups first', 'err'); return; }
-      const src = window.location.href;
+      
+      // Build complete app HTML with inline styles
+      const appHTML = document.documentElement.outerHTML
+        .replace(/'/g, "\\'")
+        .replace(/</g, '\\x3C');
+      
+      // Write minimal page first, then inject app after delay
       w.document.open();
       w.document.write(`<!DOCTYPE html><html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Google</title>
-<style>*{margin:0;padding:0}body,html{height:100%;overflow:hidden;background:#06060f}</style>
-</head><body>
-<iframe src="${src.replace(/"/g,'&quot;')}" style="position:fixed;inset:0;width:100%;height:100%;border:none" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe>
-</body></html>`);
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crown Browser</title>
+<style>*{margin:0;padding:0}body,html{height:100%;overflow:hidden;background:#06060f;color:#dde8f0;font-family:Nunito,sans-serif}</style>
+</head><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px"><div style="width:40px;height:40px;border:2px solid rgba(0,240,210,0.13);border-top-color:#00f0d2;border-radius:50%;animation:spin .7s linear infinite"></div><div style="color:#00f0d2;font-size:16px">🔒 Loading Crown Browser...</div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){try{document.open();document.write('${appHTML}');document.close();}catch(e){document.body.innerHTML='<h2 style="color:#ef4444;text-align:center;margin-top:20%">Cloak failed: '+e.message+'</h2>'}},350);<\/script></body></html>`);
       w.document.close();
+      
       toast('Cloaked tab opened ✓', 'ok');
+      
+      // Close original window after delay
+      setTimeout(() => { try { window.close(); } catch(e) {} }, 800);
+      
     } catch (e) {
       toast('Cloak failed: ' + e.message, 'err');
     }
@@ -855,7 +861,6 @@
         </div>
       </div>`).join('');
   }
-
   window.delHist = i => {
     hist.splice(i, 1);
     saveHist();
@@ -875,9 +880,7 @@
         </div>
       </div>`).join('');
   }
-
   $('do-bm').onclick = $('btn-bm').onclick;
-
   window.delBm = i => {
     bms.splice(i, 1);
     saveBms();
