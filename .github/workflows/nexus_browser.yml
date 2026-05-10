@@ -12,24 +12,25 @@ permissions:
 jobs:
   crown-browser:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/puppeteer/puppeteer:latest
-      env:
-        PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
-        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # Opt into Node.js 24 for actions
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5  # Updated to Node.js 24 compatible version
+        uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5  # Updated for Node.js 24
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      # Puppeteer installs its own Chrome – no container needed
+      - name: Install Puppeteer & Chromium
+        run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-proxy
 
       - name: Generate proxy list from env
         run: |
@@ -40,7 +41,6 @@ jobs:
         id: nexus-run
         run: |
           node nexus_engine.js "${{ secrets.TARGET_URL }}" "proxies.txt" 2>&1 | tee nexus_output.log
-          # Capture status for later steps using environment file
           if [ ${PIPESTATUS[0]} -eq 0 ]; then
             echo "status=✅ Success" >> $GITHUB_ENV
             echo "exit_code=0" >> $GITHUB_ENV
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Upload artifacts (screenshots, logs)
-        uses: actions/upload-artifact@v4  # Kept as v4 (Node.js 20 compatible actions will be updated by runner)
+        uses: actions/upload-artifact@v4
         with:
           name: crown-nexus-artifacts
           path: |
