@@ -672,10 +672,9 @@
       'use strict';
 
       /* ===== PROXY SOURCES ===== */
-      const PROXY_SOURCES = [
+      const PROXY_FALLBACK = [
         u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-        u => `https://corsproxy.io/?${encodeURIComponent(u)}`
+        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
       ];
 
       /* ===== DOM REFS ===== */
@@ -690,7 +689,7 @@
       let tabs = [];
       let tid = 1;
       let act = 0;
-      let proxyOn = true;
+      let proxyOn = false;
       let theater = false;
 
       let hist = [];
@@ -715,7 +714,7 @@
         if (/^https?:\/\//i.test(raw)) return raw;
         if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
           return 'https://' + raw;
-        return `https://www.google.com/search?q=${encodeURIComponent(raw)}`;
+        return `https://www.bing.com/search?q=${encodeURIComponent(raw)}`;
       }
 
       function esc(s) {
@@ -723,19 +722,8 @@
           .replace(/'/g, '&#x27;');
       }
 
-      function shouldFallbackToNewWindow(url) {
-        try {
-          const host = new URL(url).hostname;
-          const blocked = [
-            'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
-            'reddit.com', 'instagram.com', 'facebook.com',
-            'tiktok.com', 'twitch.tv', 'discord.com',
-            'crunchyroll.com', 'animepahe.ch', 'anikai.to'
-          ];
-          return blocked.some(d => host.includes(d));
-        } catch {
-          return false;
-        }
+      function isYoutubeUrl(url) {
+        return /youtube\.com|youtu\.be/i.test(url);
       }
 
       function getYouTubeEmbedUrl(url) {
@@ -804,7 +792,7 @@
               if (el && el.href && !el.href.startsWith('javascript:')) {
                 e.preventDefault();
                 const href = el.href;
-                if (href.startsWith('http') && !href.startsWith('https://www.google.com')) {
+                if (href.startsWith('http')) {
                   const curTab = cur();
                   if (curTab) navigateTab(curTab, href);
                 }
@@ -867,13 +855,13 @@
         } catch (err) {}
       }
 
-      /* ===== NAVIGATION ENGINE ===== */
+      /* ===== NAVIGATION ENGINE (No automatic new windows) ===== */
       function navigateTab(tab, input) {
         const finalUrl = norm(input);
         if (!finalUrl) return;
 
         // SPECIAL: YouTube embed
-        if (finalUrl.includes('youtube.com/watch') || finalUrl.includes('youtu.be/')) {
+        if (isYoutubeUrl(finalUrl)) {
           const embedUrl = getYouTubeEmbedUrl(finalUrl);
           if (embedUrl) {
             tab.url = finalUrl;
@@ -891,25 +879,6 @@
           }
         }
 
-        // Blocked sites → open in new window
-        if (shouldFallbackToNewWindow(finalUrl)) {
-          const w = window.open(finalUrl, '_blank', 'width=1000,height=750,menubar=yes,location=yes,status=yes');
-          if (!w) {
-            toast('Popup blocked. Please allow pop-ups.', 'err');
-            showFallbackMessage(tab, finalUrl, 'Site cannot be embedded. Open in new window?');
-          } else {
-            toast('Opened in new window (site blocks iframes)', 'inf');
-            tab.url = finalUrl;
-            tab.title = getHost(finalUrl);
-            if (tabs.indexOf(tab) === act) { urlBar.value = finalUrl; }
-            renderTabs();
-            navBtns();
-            addHist(finalUrl);
-            showFallbackMessage(tab, finalUrl, 'Opened in new window ✓');
-          }
-          return;
-        }
-
         // Standard navigation
         tab.url = finalUrl;
         tab.title = getHost(finalUrl);
@@ -925,8 +894,8 @@
 
         // Determine load URL
         let loadUrl = finalUrl;
-        if (proxyOn && !finalUrl.startsWith('https://www.google.com/')) {
-          const proxyFn = PROXY_SOURCES[Math.floor(Math.random() * PROXY_SOURCES.length)];
+        if (proxyOn && !finalUrl.startsWith('https://www.bing.com/')) {
+          const proxyFn = PROXY_FALLBACK[Math.floor(Math.random() * PROXY_FALLBACK.length)];
           loadUrl = proxyFn(finalUrl);
         }
 
@@ -937,10 +906,10 @@
           try {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
             if (!doc || doc.URL === 'about:blank' || (doc.URL === loadUrl && !doc.body?.innerHTML.trim())) {
-              showFallbackMessage(tab, finalUrl, 'Site failed to load. Open in new window?');
+              showErrorPage(tab, finalUrl);
             }
           } catch (err) {
-            showFallbackMessage(tab, finalUrl, 'Site cannot be embedded. Open in new window?');
+            showErrorPage(tab, finalUrl);
           }
         }, 15000);
 
@@ -957,8 +926,8 @@
         iframe.classList.add('active');
       }
 
-      /* ===== FALLBACK MESSAGE ===== */
-      function showFallbackMessage(tab, originalUrl, message) {
+      /* ===== ERROR PAGE (No auto new window, just a button) ===== */
+      function showErrorPage(tab, originalUrl) {
         const iframe = tab._iframe;
         if (!iframe) return;
         try {
@@ -1003,18 +972,19 @@
             <body>
             <div class="box">
               <h2>⬡ Crown Nexus</h2>
-              <p><strong>${esc(message)}</strong></p>
+              <p><strong>⚠️ Could not load:</strong></p>
               <p>${esc(originalUrl)}</p>
+              <p>This site likely blocks embedding (X-Frame-Options).</p>
               <div>
-                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in New Window</button>
                 <button onclick="window.location.reload()">Retry</button>
+                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in New Window</button>
               </div>
             </div>
             </body></html>
           `);
           doc.close();
         } catch (err) {}
-        toast(message, 'inf');
+        toast('Site blocked from embedding. Click "Open in New Window" if needed.', 'inf');
       }
 
       /* ===== SWITCH TAB ===== */
@@ -1117,7 +1087,7 @@
       };
       $('btn-home').onclick = () => {
         const t = cur();
-        navigateTab(t, 'https://www.google.com/webhp');
+        navigateTab(t, 'https://www.bing.com');
       };
 
       urlBar.addEventListener('keydown', e => {
