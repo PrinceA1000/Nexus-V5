@@ -23,14 +23,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      # Puppeteer installs its own Chrome – no container needed
-      - name: Install Puppeteer & Chromium
-        run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-proxy
+        run: npm ci || npm install
 
       - name: Generate proxy list from env
         run: |
@@ -49,7 +44,7 @@ jobs:
             echo "exit_code=1" >> $GITHUB_ENV
           fi
 
-      - name: Upload artifacts (screenshots, logs)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: crown-nexus-artifacts
@@ -61,4 +56,9 @@ jobs:
         if: always()
         run: |
           echo "Crown Nexus run status: ${{ env.status }}"
-          exit ${{ env.exit_code }}
+          if [ "${{ env.exit_code }}" = "0" ]; then
+            echo "✅ Workflow succeeded"
+          else
+            echo "❌ Workflow failed - check logs for details"
+            exit 1
+          fi
