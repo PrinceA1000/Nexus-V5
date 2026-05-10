@@ -8,9 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    *,
-    *::before,
-    *::after {
+    * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -678,8 +676,7 @@
       const PROXIES = [
         u => `https://api.allorigins.win/raw?url=${enc(u)}`,
         u => `https://corsproxy.io/?${enc(u)}`,
-        u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`,
-        u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`
+        u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`
       ];
 
       /* ===== DOM REFS ===== */
@@ -733,16 +730,31 @@
       function shouldOpenInNewWindow(url) {
         try {
           const host = new URL(url).hostname;
-          // YouTube, Twitter, Reddit, etc. block iframe embedding
+          // Sites that block iframes or are impossible to proxy
           const blockedDomains = [
             'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
             'reddit.com', 'instagram.com', 'facebook.com',
-            'tiktok.com', 'twitch.tv', 'discord.com'
+            'tiktok.com', 'twitch.tv', 'discord.com',
+            'animepahe.ch', 'anikai.to', 'crunchyroll.com',
+            '9anime.to', 'zoro.to', 'gogoanime', 'netflix.com',
+            'hulu.com', 'disneyplus.com', 'hbomax.com',
+            'spotify.com', 'soundcloud.com'
           ];
           return blockedDomains.some(d => host.includes(d));
         } catch {
           return false;
         }
+      }
+
+      function isSearchQuery(input) {
+        // If it's a simple text and not a domain
+        const trimmed = input.trim();
+        if (!trimmed) return false;
+        // If it looks like a domain or URL
+        if (/^https?:\/\//i.test(trimmed)) return false;
+        if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(trimmed) && !trimmed.includes(' ')) return false;
+        // Must be a search query
+        return true;
       }
 
       /* ===== BOOT ===== */
@@ -797,7 +809,7 @@
           iframe.classList.add('active');
         }
 
-        // Intercept link clicks inside iframe
+        // Simple link interceptor
         iframe.addEventListener('load', function() {
           try {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -815,9 +827,7 @@
                 }
               }
             }, true);
-          } catch (err) {
-            // Cross-origin iframe — can't intercept
-          }
+          } catch (err) { /* Cross-origin */ }
         });
       }
 
@@ -851,27 +861,28 @@
       }
 
       /* ===== NAVIGATION ENGINE ===== */
-      function navigateTab(tab, url) {
-        const finalUrl = norm(url);
+      function navigateTab(tab, input) {
+        let finalUrl = norm(input);
         if (!finalUrl) return;
 
-        // Special handling for sites that block iframes
-        if (shouldOpenInNewWindow(finalUrl)) {
-          const w = window.open(finalUrl, '_blank', 'width=900,height=700,menubar=yes,location=yes,status=yes');
-          if (w) {
-            toast('Opened in new window (site blocks iframes)', 'inf');
-          } else {
-            toast('Popup blocked. Please allow pop-ups for this site.', 'err');
-          }
-          // Do NOT load into iframe — we just opened a new window.
-          // Keep the current tab's URL as is, but don't leave it broken.
+        // 1. Handle Search Queries immediately (Open in new window)
+        if (isSearchQuery(input)) {
+          window.open(finalUrl, '_blank');
+          toast('Search opened in new window', 'inf');
           return;
         }
 
+        // 2. Handle Blocked Domains (auto-open in new window)
+        if (shouldOpenInNewWindow(finalUrl)) {
+          window.open(finalUrl, '_blank');
+          toast('Opened in new window (site blocks iframes)', 'inf');
+          return;
+        }
+
+        // 3. Standard Navigation in iframe
         tab.url = finalUrl;
         tab.title = getHost(finalUrl);
 
-        // Stack update
         if (tab.si < 0 || tab.stack[tab.si] !== finalUrl) {
           tab.stack = tab.stack.slice(0, tab.si + 1);
           tab.stack.push(finalUrl);
@@ -883,31 +894,26 @@
           createIframeForTab(tab);
         }
 
-        // Attempt proxy load (or direct)
-        let attemptUrl = finalUrl;
+        // Use proxy if enabled
+        let loadUrl = finalUrl;
         if (proxyOn) {
           const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
-          attemptUrl = proxy(finalUrl);
+          loadUrl = proxy(finalUrl);
         }
 
-        iframe.src = attemptUrl;
+        iframe.src = loadUrl;
 
-        // Error handling: if fails, show friendly error
-        iframe.onerror = function() {
-          showErrorInTab(tab, finalUrl);
-        };
-
-        // Also handle iframe load failure using a timeout
+        // Error handling
         let loadTimer = setTimeout(() => {
-          // If still loading after 8s, assume failure
           const currentUrl = iframe.contentWindow?.location?.href || '';
           if (!currentUrl || currentUrl === 'about:blank') {
             showErrorInTab(tab, finalUrl);
           }
-        }, 15000);
+        }, 12000);
 
         iframe.onload = function() {
           clearTimeout(loadTimer);
+          iframe.onload = null;
         };
 
         // UI update
@@ -934,17 +940,17 @@
               <style>
                 body { background: #0c0c1e; color: #e0efff; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; margin: 0; padding: 20px; }
                 .error-box { max-width: 500px; text-align: center; }
-                h1 { font-size: 1.8rem; color: var(--red); }
+                h1 { font-size: 1.8rem; color: #f72585; }
                 p { color: var(--dim); margin: 12px 0; }
-                button { padding: 8px 20px; margin: 4px; background: rgba(0,210,255,0.08); border: 1px solid var(--border); border-radius: 6px; color: var(--cyan); cursor: pointer; transition: .2s; }
-                button:hover { background: var(--cyan); color: #000; }
+                button { padding: 8px 20px; margin: 4px; background: rgba(0,210,255,0.08); border: 1px solid var(--border); border-radius: 6px; color: #00d2ff; cursor: pointer; transition: .2s; }
+                button:hover { background: #00d2ff; color: #000; }
               </style>
               </head>
               <body>
               <div class="error-box">
                 <h1>⛔ Unable to load</h1>
                 <p>Could not load <strong>${esc(originalUrl)}</strong>.</p>
-                <p>${proxyOn ? 'Proxy failed or site blocked embedding.' : 'Direct connection failed or site blocks iframes.'}</p>
+                <p>${proxyOn ? 'Proxy failed or site blocked embedding.' : 'Direct connection failed.'}</p>
                 <div>
                   <button onclick="window.location.reload()">Retry</button>
                   <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in new window</button>
