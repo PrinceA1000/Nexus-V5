@@ -204,7 +204,7 @@
       border-radius: var(--r);
       color: var(--cyan);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
+      font-size: 11px;
       outline: none;
       transition: border-color .2s, box-shadow .2s;
     }
@@ -602,7 +602,7 @@
 
   <div id="boot">
     <div class="b-logo">NEXUS</div>
-    <div class="b-sub">CROWN · v4.5 · REVAMPED</div>
+    <div class="b-sub">CROWN · v4.6 · REVAMPED</div>
     <div class="b-track"><div class="b-fill" id="bfill"></div></div>
   </div>
 
@@ -711,16 +711,12 @@
         try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u.slice(0, 30); }
       }
 
-      function isUrl(str) {
-        try {
-          new URL(str);
-          return true;
-        } catch {
-          return false;
-        }
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
       }
 
-      /* ===== NORMALIZE INPUT & SEARCH ===== */
+      /* ===== NORMALIZE INPUT & SEARCH (fixed) ===== */
       function norm(input) {
         let raw = input.trim();
         if (!raw) return '';
@@ -732,8 +728,8 @@
         if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
           return 'https://' + raw;
 
-        // Otherwise treat as search query → DuckDuckGo (iframe-friendly)
-        return `https://duckduckgo.com/html/?q=${encodeURIComponent(raw)}`;
+        // Otherwise treat as search query → DuckDuckGo Lite (no CAPTCHA, iframe friendly)
+        return `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(raw)}`;
       }
 
       /* ===== BOOT ===== */
@@ -859,13 +855,12 @@
         } catch (err) {}
       }
 
-      /* ===== NAVIGATION ENGINE ===== */
+      /* ===== NAVIGATION ENGINE (with CAPTCHA detection) ===== */
       function navigateTab(tab, input) {
         const finalUrl = norm(input);
         if (!finalUrl) return;
 
         tab.url = finalUrl;
-        // Try to extract proper title for YouTube or others
         tab.title = getHost(finalUrl);
 
         // Update stack
@@ -883,9 +878,8 @@
         // Determine load URL
         let loadUrl = finalUrl;
 
-        // Use proxy only if it's a external website (not Google/DuckDuckGo)
-        if (proxyOn && !finalUrl.startsWith('https://duckduckgo.com/')) {
-          // Try proxies sequentially
+        // Use proxy only if it's a external website (not search engine)
+        if (proxyOn && !finalUrl.startsWith('https://lite.duckduckgo.com/')) {
           const proxyFn = PROXIES[Math.floor(Math.random() * PROXIES.length)];
           loadUrl = proxyFn(finalUrl);
         }
@@ -899,22 +893,32 @@
         }
 
         iframe.src = loadUrl;
+        iframe.onload = null; // Remove old handler to avoid multiple triggers
 
-        // Timeout fallback — if page doesn't load, show error card
-        let errorTimer = setTimeout(() => {
-          try {
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!doc || doc.URL === 'about:blank' || doc.body?.innerHTML === '') {
-              showErrorInTab(tab, finalUrl);
-            }
-          } catch (err) {
-            // cross-origin or empty, assume error
-            showErrorInTab(tab, finalUrl);
-          }
+        // Error detection after load
+        let errorTimeout = setTimeout(() => {
+          handleIframeError(tab, finalUrl);
         }, 15000);
 
         iframe.onload = function() {
-          clearTimeout(errorTimer);
+          clearTimeout(errorTimeout);
+          // Try to detect CAPTCHA or error page inside iframe
+          try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (doc) {
+              const bodyText = doc.body?.innerText || '';
+              if (bodyText.includes('Invalid domain for site key') || 
+                  bodyText.includes('ERROR for site owner') ||
+                  bodyText.includes('Cloudflare') ||
+                  bodyText.includes('captcha')) {
+                // CAPTCHA detected — replace with clean error
+                showSearchError(tab, finalUrl);
+                return;
+              }
+            }
+          } catch (err) {
+            // Cross-origin or no access — likely a valid page, do nothing
+          }
         };
 
         // Update UI
@@ -929,8 +933,8 @@
         iframe.classList.add('active');
       }
 
-      /* ===== ERROR PAGE ===== */
-      function showErrorInTab(tab, originalUrl) {
+      /* ===== SEARCH ERROR PAGE (CAPTCHA fallback) ===== */
+      function showSearchError(tab, originalUrl) {
         const iframe = tab._iframe;
         if (!iframe) return;
         try {
@@ -938,7 +942,7 @@
           if (!doc) return;
           doc.open();
           doc.write(`
-            <html><head><title>Loading Error</title>
+            <html><head><title>Search Blocked</title>
             <style>
               body {
                 background: #0c0c1e;
@@ -982,24 +986,89 @@
             </head>
             <body>
             <div class="error-box">
-              <h1>⛔ Unable to load</h1>
-              <p>Could not load <strong>${esc(originalUrl)}</strong>.</p>
-              <p>${proxyOn ? 'Proxy failed or site blocked embedding.' : 'Direct connection failed or site blocks iframes.'}</p>
+              <h1>⛔ Search Blocked</h1>
+              <p>The search engine detected a CAPTCHA or invalid domain key.</p>
+              <p><strong>Use one of these alternatives:</strong></p>
               <div>
+                <button onclick="window.open('https://duckduckgo.com/?q=${encodeURIComponent(originalUrl.replace('https://lite.duckduckgo.com/lite/?q=', ''))}', '_blank')">
+                  Open Search in New Window
+                </button>
                 <button onclick="window.location.reload()">Retry</button>
-                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in new window</button>
               </div>
             </div>
             </body></html>
           `);
           doc.close();
         } catch (err) {}
-        toast('Error loading site. Try opening in new window.', 'err');
+        toast('Search triggered CAPTCHA protection. Try opening in new window.', 'inf');
       }
 
-      function esc(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;');
+      /* ===== GENERIC ERROR PAGE ===== */
+      function handleIframeError(tab, originalUrl) {
+        const iframe = tab._iframe;
+        if (!iframe) return;
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (!doc) return;
+          // Only show error if still blank or error
+          const bodyText = doc.body?.innerText || '';
+          if (bodyText.includes('Invalid domain') || bodyText.includes('ERROR for site owner')) {
+            showSearchError(tab, originalUrl);
+          } else if (!doc.body?.innerHTML || doc.body.innerHTML.trim() === '') {
+            // Dead page
+            doc.open();
+            doc.write(`
+              <html><head><title>Page Unreachable</title>
+              <style>
+                body {
+                  background: #0c0c1e;
+                  color: #e0efff;
+                  font-family: 'Nunito', sans-serif;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-direction: column;
+                  height: 100vh;
+                  margin: 0;
+                  padding: 20px;
+                }
+                .error-box {
+                  max-width: 500px;
+                  text-align: center;
+                }
+                h1 {
+                  font-size: 1.8rem;
+                  color: var(--dim);
+                }
+                button {
+                  padding: 8px 20px;
+                  margin: 4px;
+                  background: rgba(0, 210, 255, 0.08);
+                  border: 1px solid var(--border);
+                  border-radius: 6px;
+                  color: var(--cyan);
+                  cursor: pointer;
+                  transition: .2s;
+                }
+                button:hover {
+                  background: var(--cyan);
+                  color: #000;
+                }
+              </style>
+              </head>
+              <body>
+              <div class="error-box">
+                <h1>⛔ Page Unreachable</h1>
+                <p>Could not load <strong>${esc(originalUrl)}</strong>.</p>
+                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in new window</button>
+              </div>
+              </body></html>
+            `);
+            doc.close();
+          }
+        } catch (err) {
+          // cross-origin, ignore
+        }
       }
 
       /* ===== SWITCH TAB ===== */
