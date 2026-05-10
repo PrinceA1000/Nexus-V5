@@ -1,0 +1,57 @@
+name: Crown Nexus Browser Automation
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  crown-browser:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/puppeteer/puppeteer:latest
+      env:
+        PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g puppeteer@22
+
+      - name: Generate proxy list from env
+        run: |
+          echo "${{ secrets.PROXY_LIST }}" > proxies.txt
+
+      - name: Run Crown Nexus Engine
+        id: nexus-run
+        run: |
+          node nexux_engine.js "${{ secrets.TARGET_URL }}" "proxies.txt" 2>&1 | tee nexus_output.log
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+
+      - name: Upload artifacts (screenshots, logs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: crown-nexus-artifacts
+          path: |
+            crown-nexus-screenshot.png
+            nexus_output.log
+
+      - name: Commit status (optional)
+        if: always()
+        run: |
+          echo "::set-output name=status::$(if [ ${{ steps.nexus-run.outcome }} == 'success' ]; then echo '✅ Success'; else echo '❌ Failure'; fi)"

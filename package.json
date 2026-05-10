@@ -1,0 +1,21 @@
+{
+  "name": "crown-nexus-browser",
+  "version": "5.0.0",
+  "description": "Headless browser automation with proxy rotation and TUI dashboard for GitHub Actions",
+  "main": "nexus_engine.js",
+  "scripts": {
+    "start": "node nexus_engine.js"
+  },
+  "dependencies": {
+    "puppeteer": "^22.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-proxy": "^2.5.5",
+    "chalk": "^5.3.0",
+    "cli-progress": "^3.12.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
