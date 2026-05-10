@@ -343,7 +343,7 @@
 <!-- ===== BOOT ===== -->
 <div id="boot">
   <div class="b-logo">CROWN</div>
-  <div class="b-sub">BROWSER · v3.1 · Fixed</div>
+  <div class="b-sub">BROWSER · v3.1 · REVISED</div>
   <div class="b-track"><div class="b-fill" id="bfill"></div></div>
 </div>
 
@@ -553,10 +553,7 @@
     return INVIDIOUS[0] + '/';
   }
   function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function escA(s) {
-    return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
   }
 
   /* =============================================
@@ -597,6 +594,7 @@
   }
   function closeTab(id) {
     if (tabs.length === 1) { newTab(); }
+    if (act === id) { clearInterval(keepAliveTimer); }
     tabs = tabs.filter(t => t.id !== id);
     if (act === id) {
       act = tabs[tabs.length - 1].id;
@@ -636,7 +634,8 @@
   async function load(url) {
     busy = true;
     showLoad(`Connecting to ${host(url)}…`);
-    if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+    const prevBlobUrl = blobUrl;
+    blobUrl = null;
     clearInterval(keepAliveTimer);
     frame.src = 'about:blank';
 
@@ -650,9 +649,11 @@
       }
     } catch (e) {
       console.warn('Load error:', e.message);
+      blobUrl = null;
       showErr(e.message || 'Page failed to load.');
     } finally {
       busy = false;
+      if (prevBlobUrl) { URL.revokeObjectURL(prevBlobUrl); }
     }
   }
 
@@ -851,41 +852,61 @@
   function renderHist() {
     const el = $('pane-hist');
     if (!hist.length) { el.innerHTML = '<div class="empty">No history yet.</div>'; return; }
-    el.innerHTML = hist.slice(0, 60).map((h, i) => `
-      <div class="si">
+    el.innerHTML = '';
+    hist.slice(0, 60).forEach((h, i) => {
+      const div = document.createElement('div');
+      div.className = 'si';
+      div.innerHTML = `
         <div class="si-ttl">${esc(h.title)}</div>
         <div class="si-url">${esc(h.url)}</div>
-        <div class="si-row">
-          <button class="sm" onclick="nav('${escA(h.url)}');document.getElementById('sidebar').classList.remove('open')">Visit</button>
-          <button class="sm" onclick="delHist(${i})">✕</button>
-        </div>
-      </div>`).join('');
+        <div class="si-row"></div>`;
+      const row = div.querySelector('.si-row');
+
+      const visitBtn = document.createElement('button');
+      visitBtn.className = 'sm';
+      visitBtn.textContent = 'Visit';
+      visitBtn.onclick = () => { nav(h.url); sidebar.classList.remove('open'); };
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'sm';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => { hist.splice(i, 1); saveHist(); renderHist(); };
+
+      row.appendChild(visitBtn);
+      row.appendChild(delBtn);
+      el.appendChild(div);
+    });
   }
-  window.delHist = i => {
-    hist.splice(i, 1);
-    saveHist();
-    renderHist();
-  };
 
   function renderBms() {
     const el = $('bm-list');
     if (!bms.length) { el.innerHTML = '<div class="empty">No bookmarks yet.</div>'; return; }
-    el.innerHTML = bms.map((b, i) => `
-      <div class="si">
+    el.innerHTML = '';
+    bms.forEach((b, i) => {
+      const div = document.createElement('div');
+      div.className = 'si';
+      div.innerHTML = `
         <div class="si-ttl">${esc(b.title)}</div>
         <div class="si-url">${esc(b.url)}</div>
-        <div class="si-row">
-          <button class="sm" onclick="nav('${escA(b.url)}');document.getElementById('sidebar').classList.remove('open')">Visit</button>
-          <button class="sm" onclick="delBm(${i})">✕</button>
-        </div>
-      </div>`).join('');
+        <div class="si-row"></div>`;
+      const row = div.querySelector('.si-row');
+
+      const visitBtn = document.createElement('button');
+      visitBtn.className = 'sm';
+      visitBtn.textContent = 'Visit';
+      visitBtn.onclick = () => { nav(b.url); sidebar.classList.remove('open'); };
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'sm';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => { bms.splice(i, 1); saveBms(); renderBms(); };
+
+      row.appendChild(visitBtn);
+      row.appendChild(delBtn);
+      el.appendChild(div);
+    });
   }
   $('do-bm').onclick = $('btn-bm').onclick;
-  window.delBm = i => {
-    bms.splice(i, 1);
-    saveBms();
-    renderBms();
-  };
 
   /* =============================================
      PERSIST
