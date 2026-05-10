@@ -757,24 +757,44 @@
 
         // Intercept link clicks in iframe
         iframe.addEventListener('load', function() {
-          try {
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!doc) return;
-            doc.addEventListener('click', function(e) {
-              let el = e.target.closest('a');
-              if (el && el.href && !el.href.startsWith('javascript:')) {
-                e.preventDefault();
-                const href = el.href;
-                if (href.startsWith('http')) {
-                  const curTab = cur();
-                  if (curTab) navigateTab(curTab, href);
-                }
-              }
-            }, true);
-          } catch (err) {
-            // cross-origin — ignore
-          }
-        });
+  try {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    if (!doc) return;
+    
+    // Intercept link clicks
+    doc.addEventListener('click', function(e) {
+      let el = e.target.closest('a');
+      if (el && el.href && !el.href.startsWith('javascript:')) {
+        e.preventDefault();
+        const href = el.href;
+        if (href.startsWith('http')) {
+          const curTab = cur();
+          if (curTab) navigateTab(curTab, href);
+        }
+      }
+    }, true);
+
+    // Intercept form submissions (fixes YouTube search and other forms)
+    doc.addEventListener('submit', function(e) {
+      const form = e.target;
+      if (form.action && form.action.startsWith('http')) {
+        e.preventDefault();
+        // Build the full URL with form data
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        let targetUrl = form.action;
+        if (params.toString()) {
+          targetUrl += (targetUrl.includes('?') ? '&' : '?') + params.toString();
+        }
+        const curTab = cur();
+        if (curTab) navigateTab(curTab, targetUrl);
+      }
+    }, true);
+
+  } catch (err) {
+    // cross-origin — ignore
+  }
+});
       }
 
       function showBlankTab(tab) {
