@@ -25,8 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-         npm install puppeteer puppeteer-extra puppeteer-extra-plugin-proxy chalk cli-progress dotenv
-          
+          npm install --no-package-lock puppeteer puppeteer-extra@3.3.6 puppeteer-extra-plugin-proxy@2.5.5 chalk cli-progress dotenv
 
       - name: Generate proxy list from env
         run: |
