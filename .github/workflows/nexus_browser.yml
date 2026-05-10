@@ -24,10 +24,8 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        # 🔁 Use npm install (no lockfile required) and install puppeteer explicitly
         run: |
-          npm install
-          npm install puppeteer puppeteer-extra puppeteer-extra-plugin-proxy@2.5.5 chalk cli-progress dotenv
+          npm install puppeteer puppeteer-extra @puppeteer-extra/plugin-proxy chalk cli-progress dotenv
 
       - name: Generate proxy list from env
         run: |
