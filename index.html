@@ -39,6 +39,7 @@
       overflow: hidden;
       user-select: none;
     }
+
     #boot {
       position: fixed;
       inset: 0;
@@ -59,6 +60,7 @@
         pointer-events: none;
       }
     }
+
     .b-logo {
       font-family: 'Rajdhani', sans-serif;
       font-size: 2.8rem;
@@ -97,6 +99,7 @@
       border-radius: 1px;
       transition: width 0.8s cubic-bezier(.4, 0, .2, 1);
     }
+
     #app {
       position: fixed;
       inset: 0;
@@ -106,6 +109,7 @@
     #app.on {
       display: flex;
     }
+
     #topbar {
       height: var(--topH);
       flex-shrink: 0;
@@ -126,6 +130,7 @@
       pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px);
     }
+
     .logo-wrap {
       display: flex;
       align-items: center;
@@ -153,12 +158,14 @@
       color: var(--text);
       text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
     }
+
     .sep {
       width: 1px;
       height: 18px;
       background: var(--border);
       flex-shrink: 0;
     }
+
     .ico {
       width: 32px;
       height: 32px;
@@ -182,6 +189,7 @@
       opacity: .2;
       cursor: not-allowed;
     }
+
     .addr {
       flex: 1;
       position: relative;
@@ -216,12 +224,14 @@
       font-size: 12px;
       pointer-events: none;
     }
+
     .rgroup {
       display: flex;
       gap: 4px;
       flex-shrink: 0;
       align-items: center;
     }
+
     .pbtn {
       height: 28px;
       padding: 0 10px;
@@ -256,6 +266,7 @@
       background: var(--cyan);
       box-shadow: 0 0 8px var(--cyan);
     }
+
     #tabs {
       height: var(--tabH);
       flex-shrink: 0;
@@ -274,6 +285,7 @@
     #tabs::-webkit-scrollbar-thumb {
       background: var(--border);
     }
+
     .tab {
       height: 26px;
       min-width: 80px;
@@ -324,6 +336,7 @@
       background: rgba(239, 68, 68, 0.2);
       color: var(--red);
     }
+
     .newtab {
       width: 24px;
       height: 24px;
@@ -343,6 +356,7 @@
       color: var(--cyan);
       border-color: var(--bh);
     }
+
     #viewport {
       flex: 1;
       position: relative;
@@ -362,6 +376,7 @@
     #viewport .tab-iframe.active {
       display: block;
     }
+
     #sidebar {
       position: absolute;
       top: 0;
@@ -380,6 +395,7 @@
     #sidebar.open {
       transform: translateX(0);
     }
+
     .sb-hdr {
       display: flex;
       border-bottom: 1px solid var(--border);
@@ -430,6 +446,7 @@
       background: rgba(239, 68, 68, 0.13);
       color: var(--red);
     }
+
     .sb-pane {
       flex: 1;
       overflow-y: auto;
@@ -446,6 +463,7 @@
       background: var(--border);
       border-radius: 2px;
     }
+
     .sb-add {
       display: block;
       width: 100%;
@@ -466,6 +484,7 @@
       color: var(--cyan);
       background: rgba(0, 210, 255, 0.05);
     }
+
     .si {
       padding: 10px 12px;
       margin-bottom: 6px;
@@ -522,6 +541,7 @@
       color: var(--dim);
       font-size: 12px;
     }
+
     #toast {
       position: fixed;
       bottom: 14px;
@@ -556,6 +576,7 @@
       border-color: var(--cyan);
       color: var(--cyan);
     }
+
     @media (max-width: 600px) {
       .logo-text,
       .sep {
@@ -578,12 +599,15 @@
   </style>
 </head>
 <body>
+
   <div id="boot">
     <div class="b-logo">NEXUS</div>
     <div class="b-sub">CROWN · v5.0 · UTOPIA-STYLE</div>
     <div class="b-track"><div class="b-fill" id="bfill"></div></div>
   </div>
+
   <div id="app">
+
     <div id="topbar">
       <div class="logo-wrap">
         <div class="logo-icon" aria-hidden="true">
@@ -603,10 +627,12 @@
       <button class="ico" id="btn-fwd" disabled title="Forward">&#8594;</button>
       <button class="ico" id="btn-rl" title="Reload">&#8635;</button>
       <button class="ico" id="btn-home" title="Home">⌂</button>
+
       <div class="addr">
         <input id="url" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off" />
         <span class="addr-ic">&#128269;</span>
       </div>
+
       <div class="rgroup">
         <button class="pbtn on" id="btn-proxy" title="Toggle Proxy">
           <div class="pdot"></div><span>PROXY</span>
@@ -617,10 +643,13 @@
         <button class="ico" id="btn-sb" title="History & Bookmarks">☰</button>
       </div>
     </div>
+
     <div id="tabs">
       <button class="newtab" id="btn-newtab" title="New Tab">+</button>
     </div>
+
     <div id="viewport"></div>
+
     <div id="sidebar">
       <div class="sb-hdr">
         <button class="sb-tab act" data-p="hist">HISTORY</button>
@@ -633,23 +662,25 @@
         <div id="bm-list"></div>
       </div>
     </div>
+
   </div>
+
   <div id="toast"></div>
 
   <script>
     (function() {
       'use strict';
 
-      /* ===== PROXY FALLBACK ===== */
+      // ===== 🔥 CONFIGURE YOUR PROXY HERE =====
+      const PROXY_URL = 'https://crown-nexus-proxy.onrender.com'; // Change this to your actual Render URL
+
       const PROXY_FALLBACK = [
-        // ⚠️ Replace 'crown-nexus-proxy.onrender.com' with your actual Render proxy URL
-        u => `https://crown-nexus-proxy.onrender.com/proxy?url=${encodeURIComponent(u)}`,
+        u => `${PROXY_URL}/proxy?url=${encodeURIComponent(u)}`,
         u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+        u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
       ];
 
-      /* ===== DOM REFS ===== */
+      // ===== DOM REFS =====
       const $ = id => document.getElementById(id);
       const urlBar = $('url');
       const toastEl = $('toast');
@@ -657,7 +688,7 @@
       const sidebar = $('sidebar');
       const viewport = $('viewport');
 
-      /* ===== STATE ===== */
+      // ===== STATE =====
       let tabs = [];
       let tid = 1;
       let act = 0;
@@ -669,7 +700,7 @@
       try { hist = JSON.parse(localStorage.getItem('cr_hist') || '[]'); } catch {}
       try { bms = JSON.parse(localStorage.getItem('cr_bm') || '[]'); } catch {}
 
-      /* ===== UTILITIES ===== */
+      // ===== UTILITIES =====
       function mk(id, title, url) {
         return { id, title, url, stack: [], si: -1 };
       }
@@ -686,7 +717,7 @@
         if (/^https?:\/\//i.test(raw)) return raw;
         if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
           return 'https://' + raw;
-        // 🔥 Using Brave Search (Bing blocks simple proxies)
+        // Use Brave Search – works reliably in iframes
         return `https://search.brave.com/search?q=${encodeURIComponent(raw)}`;
       }
 
@@ -705,7 +736,7 @@
         return null;
       }
 
-      /* ===== BOOT ===== */
+      // ===== BOOT =====
       requestAnimationFrame(() => { $('bfill').style.width = '100%'; });
       setTimeout(() => {
         $('boot').classList.add('out');
@@ -724,7 +755,7 @@
         }
       }
 
-      /* ===== TABS ===== */
+      // ===== TABS =====
       function newTab(url) {
         const t = mk(tid++, 'New Tab', url || '');
         tabs.push(t);
@@ -755,7 +786,7 @@
 
         if (tabs.indexOf(tab) === act) iframe.classList.add('active');
 
-        // Intercept link clicks in iframe
+        // Intercept link clicks and form submissions in iframe
         iframe.addEventListener('load', function() {
           try {
             const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -774,7 +805,7 @@
               }
             }, true);
 
-            // Form submission interceptor (fixes YouTube search)
+            // Form interceptor (fixes YouTube search)
             doc.addEventListener('submit', function(e) {
               const form = e.target;
               if (form.action && form.action.startsWith('http')) {
@@ -848,7 +879,7 @@
         } catch (err) {}
       }
 
-      /* ===== NAVIGATION ENGINE ===== */
+      // ===== NAVIGATION ENGINE =====
       function navigateTab(tab, input) {
         const finalUrl = norm(input);
         if (!finalUrl) return;
@@ -927,7 +958,7 @@
         iframe.classList.add('active');
       }
 
-      /* ===== ERROR PAGE ===== */
+      // ===== ERROR PAGE =====
       function showErrorPage(tab, originalUrl) {
         const iframe = tab._iframe;
         if (!iframe) return;
@@ -988,7 +1019,7 @@
         toast('Site blocked from embedding. Click "Open in New Window" if needed.', 'inf');
       }
 
-      /* ===== SWITCH TAB ===== */
+      // ===== SWITCH TAB =====
       function switchTab(idx) {
         if (idx < 0 || idx >= tabs.length) return;
         act = idx;
@@ -1009,7 +1040,7 @@
         navBtns();
       }
 
-      /* ===== CLOSE TAB ===== */
+      // ===== CLOSE TAB =====
       function closeTab(idx) {
         if (tabs.length <= 1) {
           toast('Cannot close the last tab', 'inf');
@@ -1045,7 +1076,7 @@
         navBtns();
       }
 
-      /* ===== RENDER TABS ===== */
+      // ===== RENDER TABS =====
       function renderTabs() {
         tabsEl.querySelectorAll('.tab').forEach(el => el.remove());
         tabs.forEach((t, idx) => {
@@ -1064,7 +1095,7 @@
         });
       }
 
-      /* ===== NAVIGATION CONTROLS ===== */
+      // ===== NAVIGATION CONTROLS =====
       function navBtns() {
         const t = cur();
         if (!t) return;
@@ -1098,7 +1129,7 @@
         }
       });
 
-      /* ===== PROXY TOGGLE ===== */
+      // ===== PROXY TOGGLE =====
       $('btn-proxy').onclick = () => {
         proxyOn = !proxyOn;
         $('btn-proxy').classList.toggle('on', proxyOn);
@@ -1107,7 +1138,7 @@
         if (t && t.url) navigateTab(t, t.url);
       };
 
-      /* ===== BOOKMARK ===== */
+      // ===== BOOKMARK =====
       $('btn-bm').onclick = () => {
         const t = cur();
         if (!t || !t.url) { toast('Nothing to bookmark', 'inf'); return; }
@@ -1119,7 +1150,7 @@
       };
       $('do-bm').onclick = $('btn-bm').onclick;
 
-      /* ===== CLOAK ===== */
+      // ===== CLOAK =====
       $('btn-cloak').onclick = () => {
         try {
           const t = cur();
@@ -1132,7 +1163,7 @@
         }
       };
 
-      /* ===== THEATER MODE ===== */
+      // ===== THEATER MODE =====
       function toggleTheater() {
         theater = !theater;
         if (theater) {
@@ -1148,7 +1179,7 @@
       });
       $('btn-theater').onclick = toggleTheater;
 
-      /* ===== SIDEBAR ===== */
+      // ===== SIDEBAR =====
       $('btn-sb').onclick = () => { sidebar.classList.add('open');
         renderSidebar(); };
       $('sb-close').onclick = () => sidebar.classList.remove('open');
@@ -1174,9 +1205,10 @@
           const div = document.createElement('div');
           div.className = 'si';
           div.innerHTML =
-            `<div class="si-ttl">${esc(h.title)}</div>
-             <div class="si-url">${esc(h.url)}</div>
-             <div class="si-row"></div>`;
+            `
+                <div class="si-ttl">${esc(h.title)}</div>
+                <div class="si-url">${esc(h.url)}</div>
+                <div class="si-row"></div>`;
           const row = div.querySelector('.si-row');
 
           const visitBtn = document.createElement('button');
@@ -1209,9 +1241,10 @@
           const div = document.createElement('div');
           div.className = 'si';
           div.innerHTML =
-            `<div class="si-ttl">${esc(b.title)}</div>
-             <div class="si-url">${esc(b.url)}</div>
-             <div class="si-row"></div>`;
+            `
+                <div class="si-ttl">${esc(b.title)}</div>
+                <div class="si-url">${esc(b.url)}</div>
+                <div class="si-row"></div>`;
           const row = div.querySelector('.si-row');
 
           const visitBtn = document.createElement('button');
@@ -1236,7 +1269,7 @@
         });
       }
 
-      /* ===== PERSIST ===== */
+      // ===== PERSIST =====
       function addHist(url) {
         const title = getHost(url) || 'Untitled';
         hist = hist.filter(h => h.url !== url);
@@ -1249,7 +1282,7 @@
 
       function saveBms() { try { localStorage.setItem('cr_bm', JSON.stringify(bms)); } catch {} }
 
-      /* ===== KEYBOARD SHORTCUTS ===== */
+      // ===== KEYBOARD SHORTCUTS =====
       document.addEventListener('keydown', e => {
         const tag = e.target.tagName;
         if (tag === 'INPUT' || e.target.isContentEditable) return;
@@ -1273,7 +1306,7 @@
           urlBar.select(); }
       });
 
-      /* ===== TOAST ===== */
+      // ===== TOAST =====
       let ttimer;
 
       function toast(msg, type = 'inf') {
