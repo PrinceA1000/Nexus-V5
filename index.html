@@ -164,92 +164,6 @@
     .newtab:hover { background: rgba(0,240,210,0.07); color: var(--cyan); border-color: var(--bh); }
 
     /* ==============================
-       VIEWPORT
-    ============================== */
-    #vp { flex: 1; position: relative; background: #000; overflow: hidden; }
-    #frame {
-      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
-    }
-
-    /* ==============================
-       OVERLAYS
-    ============================== */
-    .ov {
-      position: absolute; inset: 0; z-index: 10;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 28px;
-      transition: opacity .2s;
-    }
-    .ov.hide { opacity: 0; pointer-events: none; }
-
-    #ov-home {
-      background: var(--bg);
-      background-image:
-        linear-gradient(rgba(0,240,210,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,240,210,0.025) 1px, transparent 1px);
-      background-size: 44px 44px;
-    }
-    .h-logo {
-      font-family: 'Rajdhani', sans-serif; font-size: 3.2rem; font-weight: 700;
-      letter-spacing: 8px; color: var(--cyan);
-      text-shadow: 0 0 40px rgba(0,240,210,0.35);
-    }
-    .h-sub { font-size: 0.65rem; letter-spacing: 3px; color: var(--dim); margin-bottom: 28px; }
-    .h-row { display: flex; gap: 7px; width: min(480px, 90%); margin-bottom: 28px; }
-    .h-input {
-      flex: 1; height: 42px; padding: 0 15px;
-      background: rgba(0,0,0,0.45); border: 1px solid var(--border); border-radius: var(--r);
-      color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .h-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,240,210,0.1); }
-    .h-input::placeholder { color: var(--muted); }
-    .h-go {
-      height: 42px; padding: 0 18px; border: none; border-radius: var(--r);
-      background: var(--cyan); color: #000; font-weight: 700; font-size: 13px;
-      cursor: pointer; transition: filter .15s;
-    }
-    .h-go:hover { filter: brightness(1.1); }
-
-    .quickgrid {
-      display: grid; grid-template-columns: repeat(4, 82px); gap: 10px;
-    }
-    .qtile {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 13px 8px;
-      background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 10px;
-      cursor: pointer; font-size: 11px; color: var(--dim); transition: all .18s;
-    }
-    .qtile:hover { border-color: var(--cyan); background: rgba(0,240,210,0.055); color: var(--cyan); transform: translateY(-2px); }
-    .qtile .qi { font-size: 21px; }
-
-    #ov-load { background: var(--bg); }
-    .spin {
-      width: 38px; height: 38px; margin-bottom: 14px;
-      border: 2px solid rgba(0,240,210,0.13); border-top-color: var(--cyan);
-      border-radius: 50%; animation: spin .7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .l-title { font-size: 14px; font-weight: 700; color: var(--cyan); margin-bottom: 5px; }
-    .l-sub   { font-size: 11.5px; color: var(--dim); max-width: 300px; }
-
-    #ov-err { background: var(--bg); }
-    .e-ico  { font-size: 38px; margin-bottom: 12px; }
-    .e-ttl  { font-size: 16px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
-    .e-msg  { font-size: 12px; color: var(--dim); max-width: 340px; line-height: 1.55; margin-bottom: 18px; }
-    .e-row  { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-
-    .btn {
-      height: 34px; padding: 0 15px; border-radius: var(--r); border: none;
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 5px; transition: all .15s;
-    }
-    .btn-c { background: var(--cyan); color: #000; }
-    .btn-c:hover { filter: brightness(1.1); }
-    .btn-g { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); }
-    .btn-g:hover { border-color: var(--bh); background: rgba(0,240,210,0.06); }
-
-    /* ==============================
        SIDEBAR
     ============================== */
     #sidebar {
@@ -380,53 +294,6 @@
     <button class="newtab" id="btn-newtab" title="New Tab">+</button>
   </div>
 
-  <!-- VIEWPORT -->
-  <div id="vp">
-    <iframe id="frame"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-downloads"
-      allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
-      allowfullscreen>
-    </iframe>
-
-    <!-- HOME -->
-    <div class="ov" id="ov-home">
-      <div class="h-logo">CROWN</div>
-      <div class="h-sub">YOUR BROWSER · YOUR RULES</div>
-      <div class="h-row">
-        <input class="h-input" id="h-url" placeholder="Search Google or enter a URL…">
-        <button class="h-go" id="h-go">Go</button>
-      </div>
-      <div class="quickgrid">
-        <div class="qtile" data-url="https://youtube.com">        <span class="qi">▶️</span>YouTube</div>
-        <div class="qtile" data-url="https://www.google.com">     <span class="qi">🔍</span>Google</div>
-        <div class="qtile" data-url="https://wikipedia.org">      <span class="qi">📖</span>Wiki</div>
-        <div class="qtile" data-url="https://github.com">         <span class="qi">🐙</span>GitHub</div>
-        <div class="qtile" data-url="https://twitch.tv">          <span class="qi">🎮</span>Twitch</div>
-        <div class="qtile" data-url="https://reddit.com">         <span class="qi">🤖</span>Reddit</div>
-        <div class="qtile" data-url="https://discord.com/app">    <span class="qi">💬</span>Discord</div>
-        <div class="qtile" data-url="https://open.spotify.com">   <span class="qi">🎵</span>Spotify</div>
-      </div>
-    </div>
-
-    <!-- LOADING -->
-    <div class="ov hide" id="ov-load">
-      <div class="spin"></div>
-      <div class="l-title">Loading</div>
-      <div class="l-sub" id="l-sub">Connecting…</div>
-    </div>
-
-    <!-- ERROR -->
-    <div class="ov hide" id="ov-err">
-      <div class="e-ico">⚠</div>
-      <div class="e-ttl">Page Unavailable</div>
-      <div class="e-msg" id="e-msg">This page couldn't be loaded.</div>
-      <div class="e-row">
-        <button class="btn btn-c" id="btn-retry">↺ Retry with Proxy</button>
-        <button class="btn btn-g" id="btn-ext">↗ Open in New Tab</button>
-      </div>
-    </div>
-  </div>
-
   <!-- SIDEBAR -->
   <div id="sidebar">
     <div class="sb-hdr">
@@ -476,11 +343,7 @@
   let tabs = [mk(1, 'New Tab', '')];
   let tid  = 2;
   let act  = 1;
-  let busy = false;
   let proxyOn = true;
-  let theater = false;
-  let blobUrl = null;
-  let keepAliveTimer = null;
 
   let hist = [];
   let bms  = [];
@@ -491,13 +354,7 @@
      ELEMENTS
   ============================================= */
   const $ = id => document.getElementById(id);
-  const frame   = $('frame');
   const urlBar  = $('url');
-  const ovHome  = $('ov-home');
-  const ovLoad  = $('ov-load');
-  const lSub    = $('l-sub');
-  const ovErr   = $('ov-err');
-  const eMsg    = $('e-msg');
   const toastEl = $('toast');
   const tabsEl  = $('tabs');
   const sidebar = $('sidebar');
@@ -512,7 +369,6 @@
       $('boot').style.display = 'none';
       $('app').classList.add('on');
       renderTabs();
-      showHome();
       registerSW();
     }, 450);
   }, 1050);
@@ -532,7 +388,7 @@
      UTILS
   ============================================= */
   function enc(u) { return encodeURIComponent(u); }
-  function mk(id, title, url) { return { id, title, url, stack: [], si: -1 }; }
+  function mk(id, title, url) { return { id, title, url, stack: [], si: -1, contentWindow: null }; }
   function cur() { return tabs.find(t => t.id === act); }
   function host(u) {
     try { return new URL(u).hostname.replace(/^www\./, ''); }
@@ -554,6 +410,51 @@
   }
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+  }
+
+  /* =============================================
+     WINDOW FACTORY - INDEPENDENT INSTANCES
+  ============================================= */
+  function openContentWindow(url) {
+    const width = Math.max(900, window.innerWidth - 300);
+    const height = window.innerHeight - 100;
+    const left = window.screenX + 100;
+    const top = window.screenY + 50;
+    const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=yes,location=yes,status=yes`;
+
+    const contentWindow = window.open('', '_blank', features);
+    if (!contentWindow) { toast('Pop-ups blocked — allow pop-ups first', 'err'); return null; }
+
+    try {
+      loadContentInWindow(contentWindow, url);
+    } catch (e) {
+      console.warn('Window open error:', e);
+      toast('Failed to open window', 'err');
+      return null;
+    }
+    return contentWindow;
+  }
+
+  function loadContentInWindow(contentWindow, url) {
+    if (!contentWindow || contentWindow.closed) return;
+    const proxyUrl = buildProxyUrl(url);
+    contentWindow.location.href = proxyUrl;
+  }
+
+  function buildProxyUrl(url) {
+    if (!proxyOn) return url;
+    const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
+    return proxy(url);
+  }
+
+  function load(url) {
+    if (!url) { toast('No URL to load', 'err'); return; }
+    nav(url);
+  }
+
+  function showHome() {
+    sidebar.classList.remove('open');
+    if (tabsEl.querySelector('.tab-x')) tabsEl.querySelectorAll('.tab').forEach(el => el.style.display = 'none');
   }
 
   /* =============================================
@@ -579,28 +480,52 @@
     tabs.push(t);
     act = t.id;
     renderTabs();
-    if (url) nav(url);
-    else { showHome(); urlBar.value = ''; }
     navBtns();
+
+    if (url) {
+      t.contentWindow = openContentWindow(url);
+    } else {
+      // Open blank window for new tab
+      t.contentWindow = window.open('about:blank', '_blank', 'width=900,height=700');
+    }
   }
   function switchTab(id) {
     const t = tabs.find(x => x.id === id);
     if (!t) return;
     act = id;
     renderTabs();
-    if (t.url) nav(t.url, false);
-    else { showHome(); urlBar.value = ''; }
+
+    // Focus the content window instead of reloading
+    if (t.contentWindow && !t.contentWindow.closed) {
+      t.contentWindow.focus();
+    } else if (t.url) {
+      // Window closed, reopen it
+      t.contentWindow = openContentWindow(t.url);
+    } else {
+      // No URL, open blank window
+      t.contentWindow = window.open('about:blank', '_blank', 'width=900,height=700');
+    }
     navBtns();
   }
   function closeTab(id) {
+    const tab = tabs.find(t => t.id === id);
+
+    // Close associated window
+    if (tab && tab.contentWindow && !tab.contentWindow.closed) {
+      tab.contentWindow.close();
+    }
+
     if (tabs.length === 1) { newTab(); }
-    if (act === id) { clearInterval(keepAliveTimer); }
     tabs = tabs.filter(t => t.id !== id);
     if (act === id) {
       act = tabs[tabs.length - 1].id;
       const t = cur();
-      if (t.url) nav(t.url, false);
-      else showHome();
+      // Focus the new active tab's window
+      if (t.contentWindow && !t.contentWindow.closed) {
+        t.contentWindow.focus();
+      } else if (t.url) {
+        t.contentWindow = openContentWindow(t.url);
+      }
     }
     renderTabs();
   }
@@ -624,108 +549,15 @@
     navBtns();
     renderTabs();
     addHist(url);
-    await load(url);
+
+    // Open/load in independent content window
+    if (!t.contentWindow || t.contentWindow.closed) {
+      t.contentWindow = openContentWindow(url);
+    } else {
+      loadContentInWindow(t.contentWindow, url);
+    }
   }
   window.nav = nav;
-
-  /* =============================================
-     LOAD
-  ============================================= */
-  async function load(url) {
-    busy = true;
-    showLoad(`Connecting to ${host(url)}…`);
-    const prevBlobUrl = blobUrl;
-    blobUrl = null;
-    clearInterval(keepAliveTimer);
-    frame.src = 'about:blank';
-
-    try {
-      if (isYT(url)) {
-        await loadYouTube(url);
-      } else if (!proxyOn) {
-        await direct(url);
-      } else {
-        await withProxy(url);
-      }
-    } catch (e) {
-      console.warn('Load error:', e.message);
-      blobUrl = null;
-      showErr(e.message || 'Page failed to load.');
-    } finally {
-      busy = false;
-      if (prevBlobUrl) { URL.revokeObjectURL(prevBlobUrl); }
-    }
-  }
-
-  async function loadYouTube(url) {
-    const embedUrl = ytEmbed(url);
-    // Keep-alive for YouTube embeds
-    await direct(embedUrl);
-    keepAliveTimer = setInterval(() => {
-      try {
-        if (frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
-          frame.src = embedUrl;
-        }
-      } catch (e) {}
-    }, 4000);
-  }
-
-  function direct(url) {
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error('Connection timed out.')), TIMEOUT);
-      frame.onload  = () => { clearTimeout(t); hideOvs(); resolve(); };
-      frame.onerror = () => { clearTimeout(t); reject(new Error('Connection failed.')); };
-      frame.src = url;
-    });
-  }
-
-  async function withProxy(url) {
-    for (let i = 0; i < PROXIES.length; i++) {
-      lSub.textContent = `Trying proxy ${i + 1} of ${PROXIES.length}…`;
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 9500);
-      try {
-        const res = await fetch(PROXIES[i](url), {
-          signal: ctrl.signal,
-          headers: { Accept: 'text/html,application/xhtml+xml,*/*' }
-        });
-        clearTimeout(t);
-        if (!res.ok) continue;
-        const raw = await res.text();
-        const blob = new Blob([patchHtml(raw, url)], { type: 'text/html;charset=utf-8' });
-        blobUrl = URL.createObjectURL(blob);
-        await direct(blobUrl);
-        return;
-      } catch {
-        clearTimeout(t);
-        if (i === PROXIES.length - 1)
-          throw new Error(`All ${PROXIES.length} proxies failed. Try toggling Proxy OFF or open externally.`);
-      }
-    }
-  }
-
-  function patchHtml(html, base) {
-    html = html.replace(/<meta[^>]+(X-Frame-Options|Content-Security-Policy|x-frame-options|content-security-policy)[^>]*>/gi, '');
-    const baseTag = `<base href="${base}">`;
-    if (/<head[\s>]/i.test(html)) {
-      html = html.replace(/<head[\s>][^>]*>/i, m => m + baseTag);
-    } else {
-      html = baseTag + html;
-    }
-    try {
-      const proto = new URL(base).protocol;
-      html = html.replace(/(src|href|action)=["']\/\//g, `$1="${proto}//`);
-    } catch {}
-    return html;
-  }
-
-  /* =============================================
-     OVERLAY MANAGEMENT
-  ============================================= */
-  function showHome()    { frame.src = 'about:blank'; ovHome.classList.remove('hide'); ovLoad.classList.add('hide'); ovErr.classList.add('hide'); }
-  function showLoad(msg) { lSub.textContent = msg; ovHome.classList.add('hide'); ovLoad.classList.remove('hide'); ovErr.classList.add('hide'); }
-  function showErr(msg)  { eMsg.textContent = msg; ovHome.classList.add('hide'); ovLoad.classList.add('hide'); ovErr.classList.remove('hide'); }
-  function hideOvs()     { ovHome.classList.add('hide'); ovLoad.classList.add('hide'); ovErr.classList.add('hide'); }
 
   /* =============================================
      NAV BUTTONS
@@ -742,15 +574,6 @@
   urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') nav(urlBar.value); });
 
   /* =============================================
-     HOME SCREEN
-  ============================================= */
-  $('h-go').onclick = () => nav($('h-url').value);
-  $('h-url').addEventListener('keydown', e => { if (e.key === 'Enter') nav($('h-url').value); });
-  document.querySelectorAll('.qtile').forEach(el => {
-    el.onclick = () => nav(el.dataset.url);
-  });
-
-  /* =============================================
      PROXY TOGGLE
   ============================================= */
   $('btn-proxy').onclick = () => {
@@ -760,17 +583,6 @@
     const t = cur();
     if (t.url) load(t.url);
   };
-
-  /* =============================================
-     THEATER MODE
-  ============================================= */
-  $('btn-theater').onclick = toggleTheater;
-  function toggleTheater() {
-    theater = !theater;
-    $('topbar').style.display = theater ? 'none' : '';
-    $('tabs').style.display   = theater ? 'none' : '';
-    if (theater) toast('Theater mode — Esc to exit', 'inf');
-  }
 
   /* =============================================
      BOOKMARK THIS PAGE
@@ -786,32 +598,16 @@
   };
 
   /* =============================================
-     ABOUT:BLANK CLOAK (FIXED)
+     CLOAK - SEPARATE WINDOW
   ============================================= */
   $('btn-cloak').onclick = () => {
     try {
-      const w = window.open('about:blank', '_blank', 'noopener,noreferrer');
+      const t = cur();
+      if (!t.url) { toast('Nothing to cloak', 'inf'); return; }
+      const proxyUrl = buildProxyUrl(t.url);
+      const w = window.open(proxyUrl, '_blank', 'width=900,height=700');
       if (!w) { toast('Pop-ups blocked — allow pop-ups first', 'err'); return; }
-      
-      // Build complete app HTML with inline styles
-      const appHTML = document.documentElement.outerHTML
-        .replace(/'/g, "\\'")
-        .replace(/</g, '\\x3C');
-      
-      // Write minimal page first, then inject app after delay
-      w.document.open();
-      w.document.write(`<!DOCTYPE html><html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crown Browser</title>
-<style>*{margin:0;padding:0}body,html{height:100%;overflow:hidden;background:#06060f;color:#dde8f0;font-family:Nunito,sans-serif}</style>
-</head><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px"><div style="width:40px;height:40px;border:2px solid rgba(0,240,210,0.13);border-top-color:#00f0d2;border-radius:50%;animation:spin .7s linear infinite"></div><div style="color:#00f0d2;font-size:16px">🔒 Loading Crown Browser...</div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style><script>setTimeout(function(){try{document.open();document.write('${appHTML}');document.close();}catch(e){document.body.innerHTML='<h2 style="color:#ef4444;text-align:center;margin-top:20%">Cloak failed: '+e.message+'</h2>'}},350);<\/script></body></html>`);
-      w.document.close();
-      
-      toast('Cloaked tab opened ✓', 'ok');
-      
-      // Close original window after delay
-      setTimeout(() => { try { window.close(); } catch(e) {} }, 800);
-      
+      toast('Cloaked window opened ✓', 'ok');
     } catch (e) {
       toast('Cloak failed: ' + e.message, 'err');
     }
