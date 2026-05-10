@@ -404,7 +404,6 @@
   ============================================= */
   function enc(u) { return encodeURIComponent(u); }
   function mk(id, title, url) { return { id, title, url, stack: [], si: -1, contentWindow: null }; }
-  function mk(id, title, url) { return { id, title, url, stack: [], si: -1, contentWindow: null }; }
   function cur() { return tabs.find(t => t.id === act); }
   function norm(raw) {
     raw = raw.trim();
