@@ -1,1256 +1,1271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Crown Nexus: Browser</title>
-    <link rel="manifest" href="manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
-    <style>
-        /* ===== RESET & VARIABLES ===== */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        :root {
-            --bg: #05050a;
-            --bg2: #0c0c1e;
-            --panel: rgba(12, 12, 30, 0.98);
-            --border: rgba(0, 180, 255, 0.15);
-            --bh: rgba(0, 180, 255, 0.4);
-            --cyan: #00d2ff;
-            --purple: #8b5cf6;
-            --pink: #f72585;
-            --green: #06d6a0;
-            --red: #ef4444;
-            --text: #e0efff;
-            --dim: rgba(224, 239, 255, 0.45);
-            --muted: rgba(224, 239, 255, 0.15);
-            --glow: 0 0 25px rgba(0, 210, 255, 0.2);
-            --topH: 48px;
-            --tabH: 34px;
-            --r: 8px;
-        }
-        html,
-        body {
-            height: 100%;
-            width: 100%;
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Nunito', system-ui, sans-serif;
-            overflow: hidden;
-            user-select: none;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crown Nexus: Browser</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --bg: #05050a;
+      --bg2: #0c0c1e;
+      --panel: rgba(12, 12, 30, 0.98);
+      --border: rgba(0, 180, 255, 0.15);
+      --bh: rgba(0, 180, 255, 0.4);
+      --cyan: #00d2ff;
+      --purple: #8b5cf6;
+      --green: #06d6a0;
+      --red: #ef4444;
+      --text: #e0efff;
+      --dim: rgba(224, 239, 255, 0.45);
+      --muted: rgba(224, 239, 255, 0.15);
+      --topH: 48px;
+      --tabH: 34px;
+      --r: 8px;
+    }
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', system-ui, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
 
-        /* ===== BOOT ===== */
-        #boot {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        #boot.out {
-            animation: bootOut 0.45s forwards;
-        }
-        @keyframes bootOut {
-            to {
-                opacity: 0;
-                pointer-events: none;
-            }
-        }
+    #boot {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    #boot.out {
+      animation: bootOut 0.45s forwards;
+    }
+    @keyframes bootOut {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
 
-        .b-logo {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 2.8rem;
-            font-weight: 700;
-            letter-spacing: 6px;
-            color: var(--cyan);
-            text-shadow: 0 0 40px var(--cyan), 0 0 80px rgba(0, 210, 255, 0.3);
-            animation: logoGlow 2s ease-in-out infinite;
-        }
-        @keyframes logoGlow {
-            0%,
-            100% {
-                text-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0, 210, 255, 0.2);
-            }
-            50% {
-                text-shadow: 0 0 60px var(--cyan), 0 0 120px rgba(0, 210, 255, 0.35);
-            }
-        }
-        .b-sub {
-            font-size: 0.7rem;
-            letter-spacing: 4px;
-            color: var(--dim);
-            margin-bottom: 24px;
-        }
-        .b-track {
-            width: 180px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 1px;
-            overflow: hidden;
-        }
-        .b-fill {
-            height: 100%;
-            width: 0;
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            border-radius: 1px;
-            transition: width 0.8s cubic-bezier(.4, 0, .2, 1);
-        }
+    .b-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: var(--cyan);
+      text-shadow: 0 0 40px var(--cyan), 0 0 80px rgba(0, 210, 255, 0.3);
+      animation: logoGlow 2s ease-in-out infinite;
+    }
+    @keyframes logoGlow {
+      0%,
+      100% {
+        text-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0, 210, 255, 0.2);
+      }
+      50% {
+        text-shadow: 0 0 60px var(--cyan), 0 0 120px rgba(0, 210, 255, 0.35);
+      }
+    }
+    .b-sub {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: var(--dim);
+      margin-bottom: 24px;
+    }
+    .b-track {
+      width: 180px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .b-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 1px;
+      transition: width 0.8s cubic-bezier(.4, 0, .2, 1);
+    }
 
-        /* ===== APP SHELL ===== */
-        #app {
-            position: fixed;
-            inset: 0;
-            display: none;
-            flex-direction: column;
-        }
-        #app.on {
-            display: flex;
-        }
+    #app {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+    }
+    #app.on {
+      display: flex;
+    }
 
-        /* ===== TOP BAR ===== */
-        #topbar {
-            height: var(--topH);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0 10px;
-            background: var(--panel);
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(30px);
-            position: relative;
-            z-index: 200;
-        }
-        #topbar::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px);
-        }
+    #topbar {
+      height: var(--topH);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(30px);
+      position: relative;
+      z-index: 200;
+    }
+    #topbar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px);
+    }
 
-        .logo-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .logo-icon {
-            position: relative;
-            width: 28px;
-            height: 28px;
-        }
-        .logo-icon svg {
-            width: 100%;
-            height: 100%;
-            fill: none;
-            stroke: var(--cyan);
-            stroke-width: 2;
-            filter: drop-shadow(0 0 6px rgba(0, 210, 255, 0.6));
-        }
-        .logo-text {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: var(--text);
-            text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
-        }
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      position: relative;
+      width: 28px;
+      height: 28px;
+    }
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 2;
+      filter: drop-shadow(0 0 6px rgba(0, 210, 255, 0.6));
+    }
+    .logo-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text);
+      text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    }
 
-        .sep {
-            width: 1px;
-            height: 18px;
-            background: var(--border);
-            flex-shrink: 0;
-        }
+    .sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
 
-        .ico {
-            width: 32px;
-            height: 32px;
-            flex-shrink: 0;
-            display: grid;
-            place-items: center;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: var(--r);
-            color: var(--dim);
-            cursor: pointer;
-            font-size: 15px;
-            transition: all .15s;
-        }
-        .ico:hover:not(:disabled) {
-            background: rgba(0, 210, 255, 0.08);
-            border-color: var(--bh);
-            color: var(--cyan);
-        }
-        .ico:disabled {
-            opacity: .2;
-            cursor: not-allowed;
-        }
+    .ico {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--r);
+      color: var(--dim);
+      cursor: pointer;
+      font-size: 15px;
+      transition: all .15s;
+    }
+    .ico:hover:not(:disabled) {
+      background: rgba(0, 210, 255, 0.08);
+      border-color: var(--bh);
+      color: var(--cyan);
+    }
+    .ico:disabled {
+      opacity: .2;
+      cursor: not-allowed;
+    }
 
-        .addr {
-            flex: 1;
-            position: relative;
-            min-width: 0;
-        }
-        #url {
-            width: 100%;
-            height: 34px;
-            padding: 0 36px 0 12px;
-            background: rgba(0, 0, 0, 0.45);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            color: var(--cyan);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            outline: none;
-            transition: border-color .2s, box-shadow .2s;
-        }
-        #url:focus {
-            border-color: var(--cyan);
-            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.12);
-        }
-        #url::placeholder {
-            color: var(--muted);
-        }
-        .addr-ic {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--dim);
-            font-size: 12px;
-            pointer-events: none;
-        }
+    .addr {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+    }
+    #url {
+      width: 100%;
+      height: 34px;
+      padding: 0 36px 0 12px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #url:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.12);
+    }
+    #url::placeholder {
+      color: var(--muted);
+    }
+    .addr-ic {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dim);
+      font-size: 12px;
+      pointer-events: none;
+    }
 
-        .rgroup {
-            display: flex;
-            gap: 4px;
-            flex-shrink: 0;
-            align-items: center;
-        }
+    .rgroup {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      align-items: center;
+    }
 
-        .pbtn {
-            height: 28px;
-            padding: 0 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--dim);
-            cursor: pointer;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .5px;
-            transition: all .2s;
-            flex-shrink: 0;
-        }
-        .pbtn.on {
-            background: rgba(0, 210, 255, 0.08);
-            border-color: var(--cyan);
-            color: var(--cyan);
-            box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
-        }
-        .pdot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: var(--dim);
-            transition: .2s;
-        }
-        .pbtn.on .pdot {
-            background: var(--cyan);
-            box-shadow: 0 0 8px var(--cyan);
-        }
+    .pbtn {
+      height: 28px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--dim);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .pbtn.on {
+      background: rgba(0, 210, 255, 0.08);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
+    }
+    .pdot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--dim);
+      transition: .2s;
+    }
+    .pbtn.on .pdot {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
 
-        /* ===== TAB BAR ===== */
-        #tabs {
-            height: var(--tabH);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            padding: 0 8px;
-            background: rgba(6, 6, 15, 0.8);
-            border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-        #tabs::-webkit-scrollbar {
-            height: 2px;
-        }
-        #tabs::-webkit-scrollbar-thumb {
-            background: var(--border);
-        }
+    #tabs {
+      height: var(--tabH);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 0 8px;
+      background: rgba(6, 6, 15, 0.8);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    #tabs::-webkit-scrollbar {
+      height: 2px;
+    }
+    #tabs::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
 
-        .tab {
-            height: 26px;
-            min-width: 80px;
-            max-width: 160px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 0 7px 0 10px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--dim);
-            transition: all .12s;
-            flex-shrink: 0;
-            user-select: none;
-            margin-right: 2px;
-        }
-        .tab:hover:not(.act) {
-            background: rgba(0, 210, 255, 0.04);
-            color: var(--text);
-        }
-        .tab.act {
-            background: rgba(0, 210, 255, 0.07);
-            border-color: rgba(0, 210, 255, 0.25);
-            color: var(--cyan);
-        }
-        .tab-lbl {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-        }
-        .tab-x {
-            width: 15px;
-            height: 15px;
-            display: grid;
-            place-items: center;
-            border-radius: 3px;
-            font-size: 10px;
-            color: var(--dim);
-            flex-shrink: 0;
-            transition: .1s;
-        }
-        .tab-x:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--red);
-        }
+    .tab {
+      height: 26px;
+      min-width: 80px;
+      max-width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 7px 0 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--dim);
+      transition: all .12s;
+      flex-shrink: 0;
+      user-select: none;
+      margin-right: 2px;
+    }
+    .tab:hover:not(.act) {
+      background: rgba(0, 210, 255, 0.04);
+      color: var(--text);
+    }
+    .tab.act {
+      background: rgba(0, 210, 255, 0.07);
+      border-color: rgba(0, 210, 255, 0.25);
+      color: var(--cyan);
+    }
+    .tab-lbl {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .tab-x {
+      width: 15px;
+      height: 15px;
+      display: grid;
+      place-items: center;
+      border-radius: 3px;
+      font-size: 10px;
+      color: var(--dim);
+      flex-shrink: 0;
+      transition: .1s;
+    }
+    .tab-x:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--red);
+    }
 
-        .newtab {
-            width: 24px;
-            height: 24px;
-            flex-shrink: 0;
-            display: grid;
-            place-items: center;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            color: var(--dim);
-            cursor: pointer;
-            font-size: 16px;
-            transition: all .12s;
-        }
-        .newtab:hover {
-            background: rgba(0, 210, 255, 0.08);
-            color: var(--cyan);
-            border-color: var(--bh);
-        }
+    .newtab {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--dim);
+      cursor: pointer;
+      font-size: 16px;
+      transition: all .12s;
+    }
+    .newtab:hover {
+      background: rgba(0, 210, 255, 0.08);
+      color: var(--cyan);
+      border-color: var(--bh);
+    }
 
-        /* ===== VIEWPORT (iframe container) ===== */
-        #viewport {
-            flex: 1;
-            position: relative;
-            background: var(--bg);
-            overflow: hidden;
-        }
-        #viewport .tab-iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: none;
-            background: #fff;
-        }
-        #viewport .tab-iframe.active {
-            display: block;
-        }
+    #viewport {
+      flex: 1;
+      position: relative;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    #viewport .tab-iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+      background: #fff;
+    }
+    #viewport .tab-iframe.active {
+      display: block;
+    }
 
-        /* ===== SIDEBAR ===== */
-        #sidebar {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 280px;
-            background: var(--panel);
-            border-left: 1px solid var(--border);
-            backdrop-filter: blur(30px);
-            transform: translateX(100%);
-            transition: transform .25s cubic-bezier(.4, 0, .2, 1);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-        }
-        #sidebar.open {
-            transform: translateX(0);
-        }
+    #sidebar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      backdrop-filter: blur(30px);
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar.open {
+      transform: translateX(0);
+    }
 
-        .sb-hdr {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            position: relative;
-            padding-top: 3px;
-        }
-        .sb-tab {
-            flex: 1;
-            height: 42px;
-            display: grid;
-            place-items: center;
-            font-size: 10.5px;
-            font-weight: 700;
-            letter-spacing: .5px;
-            color: var(--dim);
-            cursor: pointer;
-            border: none;
-            background: none;
-            transition: color .15s;
-            border-bottom: 2px solid transparent;
-        }
-        .sb-tab:hover {
-            color: var(--text);
-        }
-        .sb-tab.act {
-            color: var(--cyan);
-            border-bottom-color: var(--cyan);
-        }
-        .sb-x {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            display: grid;
-            place-items: center;
-            background: none;
-            border: none;
-            color: var(--dim);
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-            transition: .13s;
-        }
-        .sb-x:hover {
-            background: rgba(239, 68, 68, 0.13);
-            color: var(--red);
-        }
+    .sb-hdr {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      padding-top: 3px;
+    }
+    .sb-tab {
+      flex: 1;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      color: var(--dim);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: color .15s;
+      border-bottom: 2px solid transparent;
+    }
+    .sb-tab:hover {
+      color: var(--text);
+    }
+    .sb-tab.act {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+    }
+    .sb-x {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      background: none;
+      border: none;
+      color: var(--dim);
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 4px;
+      transition: .13s;
+    }
+    .sb-x:hover {
+      background: rgba(239, 68, 68, 0.13);
+      color: var(--red);
+    }
 
-        .sb-pane {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            display: none;
-        }
-        .sb-pane.act {
-            display: block;
-        }
-        .sb-pane::-webkit-scrollbar {
-            width: 3px;
-        }
-        .sb-pane::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
+    .sb-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: none;
+    }
+    .sb-pane.act {
+      display: block;
+    }
+    .sb-pane::-webkit-scrollbar {
+      width: 3px;
+    }
+    .sb-pane::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
 
-        .sb-add {
-            display: block;
-            width: 100%;
-            height: 34px;
-            margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            color: var(--dim);
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all .15s;
-            letter-spacing: .5px;
-        }
-        .sb-add:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
-            background: rgba(0, 210, 255, 0.05);
-        }
+    .sb-add {
+      display: block;
+      width: 100%;
+      height: 34px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--dim);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: .5px;
+    }
+    .sb-add:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(0, 210, 255, 0.05);
+    }
 
-        .si {
-            padding: 10px 12px;
-            margin-bottom: 6px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            transition: all .12s;
-            cursor: pointer;
-        }
-        .si:hover {
-            border-color: var(--bh);
-            background: rgba(0, 210, 255, 0.045);
-        }
-        .si-ttl {
-            font-size: 11.5px;
-            font-weight: 600;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .si-url {
-            font-size: 10px;
-            color: var(--dim);
-            margin-top: 2px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .si-row {
-            display: flex;
-            gap: 5px;
-            margin-top: 6px;
-        }
-        .sm {
-            height: 22px;
-            padding: 0 8px;
-            font-size: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--dim);
-            cursor: pointer;
-            transition: .1s;
-        }
-        .sm:hover {
-            background: var(--cyan);
-            color: #000;
-            border-color: transparent;
-        }
-        .empty {
-            text-align: center;
-            padding: 30px 16px;
-            color: var(--dim);
-            font-size: 12px;
-        }
+    .si {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      transition: all .12s;
+      cursor: pointer;
+    }
+    .si:hover {
+      border-color: var(--bh);
+      background: rgba(0, 210, 255, 0.045);
+    }
+    .si-ttl {
+      font-size: 11.5px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .si-url {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .si-row {
+      display: flex;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    .sm {
+      height: 22px;
+      padding: 0 8px;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--dim);
+      cursor: pointer;
+      transition: .1s;
+    }
+    .sm:hover {
+      background: var(--cyan);
+      color: #000;
+      border-color: transparent;
+    }
+    .empty {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--dim);
+      font-size: 12px;
+    }
 
-        /* ===== TOAST ===== */
-        #toast {
-            position: fixed;
-            bottom: 14px;
-            left: 50%;
-            transform: translateX(-50%) translateY(50px);
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 18px;
-            font-size: 12px;
-            font-weight: 600;
-            opacity: 0;
-            transition: all .25s;
-            z-index: 9999;
-            pointer-events: none;
-            white-space: nowrap;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        }
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-        #toast.ok {
-            border-color: var(--green);
-            color: var(--green);
-        }
-        #toast.err {
-            border-color: var(--red);
-            color: var(--red);
-        }
-        #toast.inf {
-            border-color: var(--cyan);
-            color: var(--cyan);
-        }
+    #toast {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all .25s;
+      z-index: 9999;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #toast.ok {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    #toast.err {
+      border-color: var(--red);
+      color: var(--red);
+    }
+    #toast.inf {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            .logo-text,
-            .sep {
-                display: none;
-            }
-            #sidebar {
-                width: 100%;
-            }
-            .logo-icon {
-                width: 22px;
-                height: 22px;
-            }
-            .pbtn span {
-                display: none;
-            }
-            #url {
-                font-size: 11px;
-            }
-        }
-    </style>
+    @media (max-width: 600px) {
+      .logo-text,
+      .sep {
+        display: none;
+      }
+      #sidebar {
+        width: 100%;
+      }
+      .logo-icon {
+        width: 22px;
+        height: 22px;
+      }
+      .pbtn span {
+        display: none;
+      }
+      #url {
+        font-size: 11px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    <!-- ===== BOOT ===== -->
-    <div id="boot">
-        <div class="b-logo">NEXUS</div>
-        <div class="b-sub">CROWN · v4.1 · REVAMPED</div>
-        <div class="b-track"><div class="b-fill" id="bfill"></div></div>
+  <div id="boot">
+    <div class="b-logo">NEXUS</div>
+    <div class="b-sub">CROWN · v4.3 · REVAMPED</div>
+    <div class="b-track"><div class="b-fill" id="bfill"></div></div>
+  </div>
+
+  <div id="app">
+
+    <div id="topbar">
+      <div class="logo-wrap">
+        <div class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 22 L7 6 L12 15 L17 6 L22 22 L12 18 L2 22Z" stroke-linejoin="round" stroke-linecap="round" />
+            <circle cx="7" cy="7" r="2" fill="var(--cyan)" />
+            <circle cx="17" cy="7" r="2" fill="var(--cyan)" />
+            <circle cx="12" cy="18" r="2" fill="var(--cyan)" />
+            <line x1="7" y1="7" x2="12" y2="15" stroke="var(--cyan)" stroke-width="1.5" />
+            <line x1="12" y1="15" x2="17" y2="7" stroke="var(--cyan)" stroke-width="1.5" />
+          </svg>
+        </div>
+        <span class="logo-text">CROWN NEXUS</span>
+      </div>
+      <div class="sep"></div>
+      <button class="ico" id="btn-back" disabled title="Back">&#8592;</button>
+      <button class="ico" id="btn-fwd" disabled title="Forward">&#8594;</button>
+      <button class="ico" id="btn-rl" title="Reload">&#8635;</button>
+      <button class="ico" id="btn-home" title="Home">⌂</button>
+
+      <div class="addr">
+        <input id="url" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off" />
+        <span class="addr-ic">&#128269;</span>
+      </div>
+
+      <div class="rgroup">
+        <button class="pbtn on" id="btn-proxy" title="Toggle Proxy">
+          <div class="pdot"></div><span>PROXY</span>
+        </button>
+        <button class="ico" id="btn-theater" title="Theater Mode (F11)">⛶</button>
+        <button class="ico" id="btn-bm" title="Bookmark Page">♡</button>
+        <button class="ico" id="btn-cloak" title="Cloak (new window)">🎭</button>
+        <button class="ico" id="btn-sb" title="History & Bookmarks">☰</button>
+      </div>
     </div>
 
-    <!-- ===== APP ===== -->
-    <div id="app">
+    <div id="tabs">
+      <button class="newtab" id="btn-newtab" title="New Tab">+</button>
+    </div>
 
-        <!-- TOP BAR -->
-        <div id="topbar">
-            <div class="logo-wrap">
-                <div class="logo-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M2 22 L7 6 L12 15 L17 6 L22 22 L12 18 L2 22Z" stroke-linejoin="round" stroke-linecap="round" />
-                        <circle cx="7" cy="7" r="2" fill="var(--cyan)" />
-                        <circle cx="17" cy="7" r="2" fill="var(--cyan)" />
-                        <circle cx="12" cy="18" r="2" fill="var(--cyan)" />
-                        <line x1="7" y1="7" x2="12" y2="15" stroke="var(--cyan)" stroke-width="1.5" />
-                        <line x1="12" y1="15" x2="17" y2="7" stroke="var(--cyan)" stroke-width="1.5" />
-                    </svg>
+    <div id="viewport"></div>
+
+    <div id="sidebar">
+      <div class="sb-hdr">
+        <button class="sb-tab act" data-p="hist">HISTORY</button>
+        <button class="sb-tab" data-p="bm">BOOKMARKS</button>
+        <button class="sb-x" id="sb-close">✕</button>
+      </div>
+      <div class="sb-pane act" id="pane-hist"></div>
+      <div class="sb-pane" id="pane-bm">
+        <button class="sb-add" id="do-bm">+ Bookmark This Page</button>
+        <div id="bm-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      /* ===== CONFIG ===== */
+      const PROXIES = [
+        u => `https://api.allorigins.win/raw?url=${enc(u)}`,
+        u => `https://corsproxy.io/?${enc(u)}`,
+        u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`,
+        u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`
+      ];
+
+      /* ===== DOM REFS ===== */
+      const $ = id => document.getElementById(id);
+      const urlBar = $('url');
+      const toastEl = $('toast');
+      const tabsEl = $('tabs');
+      const sidebar = $('sidebar');
+      const viewport = $('viewport');
+
+      /* ===== STATE ===== */
+      let tabs = [];
+      let tid = 1;
+      let act = 0;
+      let proxyOn = true;
+      let theater = false;
+
+      let hist = [];
+      let bms = [];
+      try { hist = JSON.parse(localStorage.getItem('cr_hist') || '[]'); } catch {}
+      try { bms = JSON.parse(localStorage.getItem('cr_bm') || '[]'); } catch {}
+
+      /* ===== UTILS ===== */
+      function enc(u) { return encodeURIComponent(u); }
+
+      function mk(id, title, url) {
+        return { id, title, url, stack: [], si: -1 };
+      }
+
+      function cur() { return tabs[act]; }
+
+      function norm(raw) {
+        raw = raw.trim();
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw)) return raw;
+        if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
+          return 'https://' + raw;
+        return `https://www.google.com/search?q=${enc(raw)}`;
+      }
+
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;');
+      }
+
+      function getHost(u) {
+        try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u.slice(0, 30); }
+      }
+
+      /* ===== SMART DOMAIN DETECTION (fallback to new window) ===== */
+      function shouldOpenInNewWindow(url) {
+        try {
+          const host = new URL(url).hostname;
+          // YouTube, Twitter, Reddit, etc. block iframe embedding
+          const blockedDomains = [
+            'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+            'reddit.com', 'instagram.com', 'facebook.com',
+            'tiktok.com', 'twitch.tv', 'discord.com'
+          ];
+          return blockedDomains.some(d => host.includes(d));
+        } catch {
+          return false;
+        }
+      }
+
+      /* ===== BOOT ===== */
+      requestAnimationFrame(() => { $('bfill').style.width = '100%'; });
+      setTimeout(() => {
+        $('boot').classList.add('out');
+        setTimeout(() => {
+          $('boot').style.display = 'none';
+          $('app').classList.add('on');
+          newTab();
+          registerSW();
+        }, 450);
+      }, 1050);
+
+      function registerSW() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('sw.js', { scope: './' })
+            .catch(err => console.warn('SW registration failed:', err));
+        }
+      }
+
+      /* ===== TABS ===== */
+      function newTab(url) {
+        const t = mk(tid++, 'New Tab', url || '');
+        tabs.push(t);
+        act = tabs.length - 1;
+        renderTabs();
+        createIframeForTab(t);
+        if (url) {
+          navigateTab(t, url);
+        } else {
+          showBlankTab(t);
+        }
+        navBtns();
+        urlBar.value = t.url || '';
+      }
+      $('btn-newtab').onclick = () => newTab();
+
+      function createIframeForTab(tab) {
+        const old = document.querySelector(`#viewport .tab-iframe[data-tab="${tab.id}"]`);
+        if (old) old.remove();
+
+        const iframe = document.createElement('iframe');
+        iframe.className = 'tab-iframe';
+        iframe.dataset.tab = tab.id;
+        iframe.allow = 'camera; microphone; geolocation; fullscreen';
+        iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
+        viewport.appendChild(iframe);
+
+        tab._iframe = iframe;
+        if (tabs.indexOf(tab) === act) {
+          iframe.classList.add('active');
+        }
+
+        // Intercept link clicks inside iframe
+        iframe.addEventListener('load', function() {
+          try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) return;
+            doc.addEventListener('click', function(e) {
+              let el = e.target.closest('a');
+              if (el && el.href) {
+                e.preventDefault();
+                const href = el.href;
+                if (href.startsWith('http')) {
+                  const curTab = cur();
+                  if (curTab) {
+                    navigateTab(curTab, href);
+                  }
+                }
+              }
+            }, true);
+          } catch (err) {
+            // Cross-origin iframe — can't intercept
+          }
+        });
+      }
+
+      function showBlankTab(tab) {
+        const iframe = tab._iframe;
+        if (!iframe) return;
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (doc) {
+            doc.open();
+            doc.write(`
+                    <html>
+                    <head><title>New Tab</title>
+                    <style>
+                    body { background: #0c0c1e; color: #e0efff; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; margin: 0; }
+                    h1 { font-size: 2rem; font-weight: 300; color: rgba(0, 210, 255, 0.4); letter-spacing: 3px; }
+                    p { color: rgba(224, 239, 255, 0.2); font-size: 0.9rem; }
+                    .icon { font-size: 4rem; margin-bottom: 16px; color: rgba(0, 210, 255, 0.15); }
+                    </style>
+                    </head>
+                    <body>
+                    <div class="icon">⬡</div>
+                    <h1>CROWN NEXUS</h1>
+                    <p>Enter a URL in the address bar above</p>
+                    </body>
+                    </html>
+                  `);
+            doc.close();
+          }
+        } catch (err) {}
+      }
+
+      /* ===== NAVIGATION ENGINE ===== */
+      function navigateTab(tab, url) {
+        const finalUrl = norm(url);
+        if (!finalUrl) return;
+
+        // Special handling for sites that block iframes
+        if (shouldOpenInNewWindow(finalUrl)) {
+          const w = window.open(finalUrl, '_blank', 'width=900,height=700,menubar=yes,location=yes,status=yes');
+          if (w) {
+            toast('Opened in new window (site blocks iframes)', 'inf');
+          } else {
+            toast('Popup blocked. Please allow pop-ups for this site.', 'err');
+          }
+          // Do NOT load into iframe — we just opened a new window.
+          // Keep the current tab's URL as is, but don't leave it broken.
+          return;
+        }
+
+        tab.url = finalUrl;
+        tab.title = getHost(finalUrl);
+
+        // Stack update
+        if (tab.si < 0 || tab.stack[tab.si] !== finalUrl) {
+          tab.stack = tab.stack.slice(0, tab.si + 1);
+          tab.stack.push(finalUrl);
+          tab.si = tab.stack.length - 1;
+        }
+
+        const iframe = tab._iframe;
+        if (!iframe) {
+          createIframeForTab(tab);
+        }
+
+        // Attempt proxy load (or direct)
+        let attemptUrl = finalUrl;
+        if (proxyOn) {
+          const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
+          attemptUrl = proxy(finalUrl);
+        }
+
+        iframe.src = attemptUrl;
+
+        // Error handling: if fails, show friendly error
+        iframe.onerror = function() {
+          showErrorInTab(tab, finalUrl);
+        };
+
+        // Also handle iframe load failure using a timeout
+        let loadTimer = setTimeout(() => {
+          // If still loading after 8s, assume failure
+          const currentUrl = iframe.contentWindow?.location?.href || '';
+          if (!currentUrl || currentUrl === 'about:blank') {
+            showErrorInTab(tab, finalUrl);
+          }
+        }, 15000);
+
+        iframe.onload = function() {
+          clearTimeout(loadTimer);
+        };
+
+        // UI update
+        if (tabs.indexOf(tab) === act) {
+          urlBar.value = finalUrl;
+        }
+        renderTabs();
+        navBtns();
+        addHist(finalUrl);
+
+        document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
+        iframe.classList.add('active');
+      }
+
+      function showErrorInTab(tab, originalUrl) {
+        const iframe = tab._iframe;
+        if (!iframe) return;
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (!doc) return;
+          doc.open();
+          doc.write(`
+              <html><head><title>Loading Error</title>
+              <style>
+                body { background: #0c0c1e; color: #e0efff; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; margin: 0; padding: 20px; }
+                .error-box { max-width: 500px; text-align: center; }
+                h1 { font-size: 1.8rem; color: var(--red); }
+                p { color: var(--dim); margin: 12px 0; }
+                button { padding: 8px 20px; margin: 4px; background: rgba(0,210,255,0.08); border: 1px solid var(--border); border-radius: 6px; color: var(--cyan); cursor: pointer; transition: .2s; }
+                button:hover { background: var(--cyan); color: #000; }
+              </style>
+              </head>
+              <body>
+              <div class="error-box">
+                <h1>⛔ Unable to load</h1>
+                <p>Could not load <strong>${esc(originalUrl)}</strong>.</p>
+                <p>${proxyOn ? 'Proxy failed or site blocked embedding.' : 'Direct connection failed or site blocks iframes.'}</p>
+                <div>
+                  <button onclick="window.location.reload()">Retry</button>
+                  <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in new window</button>
                 </div>
-                <span class="logo-text">CROWN NEXUS</span>
-            </div>
-            <div class="sep"></div>
-            <button class="ico" id="btn-back" disabled title="Back">&#8592;</button>
-            <button class="ico" id="btn-fwd" disabled title="Forward">&#8594;</button>
-            <button class="ico" id="btn-rl" title="Reload">&#8635;</button>
-            <button class="ico" id="btn-home" title="Home">⌂</button>
+              </div>
+              </body></html>
+            `);
+          doc.close();
+        } catch (err) {}
+        toast('Error loading site. Try opening in new window.', 'err');
+      }
 
-            <div class="addr">
-                <input id="url" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off" />
-                <span class="addr-ic">&#128269;</span>
-            </div>
+      /* ===== SWITCH TAB ===== */
+      function switchTab(idx) {
+        if (idx < 0 || idx >= tabs.length) return;
+        act = idx;
+        const tab = cur();
+        document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
+        if (tab._iframe) {
+          tab._iframe.classList.add('active');
+        } else {
+          createIframeForTab(tab);
+          if (tab.url) {
+            navigateTab(tab, tab.url);
+          } else {
+            showBlankTab(tab);
+          }
+        }
+        urlBar.value = tab.url || '';
+        renderTabs();
+        navBtns();
+      }
 
-            <div class="rgroup">
-                <button class="pbtn on" id="btn-proxy" title="Toggle Proxy">
-                    <div class="pdot"></div><span>PROXY</span>
-                </button>
-                <button class="ico" id="btn-theater" title="Theater Mode (F11)">⛶</button>
-                <button class="ico" id="btn-bm" title="Bookmark Page">♡</button>
-                <button class="ico" id="btn-cloak" title="Cloak (new window)">🎭</button>
-                <button class="ico" id="btn-sb" title="History & Bookmarks">☰</button>
-            </div>
-        </div>
+      /* ===== CLOSE TAB ===== */
+      function closeTab(idx) {
+        if (tabs.length <= 1) {
+          toast('Cannot close the last tab', 'inf');
+          return;
+        }
+        const tab = tabs[idx];
+        if (tab._iframe) {
+          tab._iframe.remove();
+        }
+        tabs.splice(idx, 1);
 
-        <!-- TAB BAR -->
-        <div id="tabs">
-            <button class="newtab" id="btn-newtab" title="New Tab">+</button>
-        </div>
+        if (act === idx) {
+          act = Math.min(idx, tabs.length - 1);
+        } else if (act > idx) {
+          act--;
+        }
 
-        <!-- VIEWPORT (iframe container) -->
-        <div id="viewport"></div>
+        const newTab = cur();
+        document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
+        if (newTab._iframe) {
+          newTab._iframe.classList.add('active');
+        } else {
+          createIframeForTab(newTab);
+          if (newTab.url) {
+            navigateTab(newTab, newTab.url);
+          } else {
+            showBlankTab(newTab);
+          }
+        }
 
-        <!-- SIDEBAR -->
-        <div id="sidebar">
-            <div class="sb-hdr">
-                <button class="sb-tab act" data-p="hist">HISTORY</button>
-                <button class="sb-tab" data-p="bm">BOOKMARKS</button>
-                <button class="sb-x" id="sb-close">✕</button>
-            </div>
-            <div class="sb-pane act" id="pane-hist"></div>
-            <div class="sb-pane" id="pane-bm">
-                <button class="sb-add" id="do-bm">+ Bookmark This Page</button>
-                <div id="bm-list"></div>
-            </div>
-        </div>
+        urlBar.value = newTab.url || '';
+        renderTabs();
+        navBtns();
+      }
 
-    </div>
-
-    <!-- TOAST -->
-    <div id="toast"></div>
-
-    <script>
-        (function() {
-            'use strict';
-
-            /* =============================================
-                   CONFIG
-                ============================================= */
-            const PROXIES = [
-                u => `https://api.allorigins.win/raw?url=${enc(u)}`,
-                u => `https://corsproxy.io/?${enc(u)}`,
-                u => `https://api.codetabs.com/v1/proxy?quest=${enc(u)}`,
-                u => `https://thingproxy.freeboard.io/fetch/${enc(u)}`
-            ];
-
-            /* =============================================
-                   STATE
-                ============================================= */
-            let tabs = [];
-            let tid = 1;
-            let act = 0;
-            let proxyOn = true;
-            let theater = false;
-
-            let hist = [];
-            let bms = [];
-            try { hist = JSON.parse(localStorage.getItem('cr_hist') || '[]'); } catch {}
-            try { bms = JSON.parse(localStorage.getItem('cr_bm') || '[]'); } catch {}
-
-            /* =============================================
-                   ELEMENTS
-                ============================================= */
-            const $ = id => document.getElementById(id);
-            const urlBar = $('url');
-            const toastEl = $('toast');
-            const tabsEl = $('tabs');
-            const sidebar = $('sidebar');
-            const viewport = $('viewport');
-
-            /* =============================================
-                   BOOT
-                ============================================= */
-            requestAnimationFrame(() => { $('bfill').style.width = '100%'; });
-            setTimeout(() => {
-                $('boot').classList.add('out');
-                setTimeout(() => {
-                    $('boot').style.display = 'none';
-                    $('app').classList.add('on');
-                    // Create initial tab
-                    newTab();
-                    registerSW();
-                }, 450);
-            }, 1050);
-
-            /* =============================================
-                   SERVICE WORKER REGISTRATION
-                ============================================= */
-            function registerSW() {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('sw.js', { scope: './' })
-                        .catch(err => console.warn('SW registration failed:', err));
-                }
+      /* ===== RENDER TABS ===== */
+      function renderTabs() {
+        tabsEl.querySelectorAll('.tab').forEach(el => el.remove());
+        tabs.forEach((t, idx) => {
+          const el = document.createElement('div');
+          el.className = 'tab' + (idx === act ? ' act' : '');
+          el.dataset.idx = idx;
+          el.innerHTML =
+            `<span class="tab-lbl">${esc(t.title || 'New Tab')}</span><span class="tab-x" data-idx="${idx}">✕</span>`;
+          el.addEventListener('click', function(e) {
+            const x = e.target.dataset.idx;
+            if (x !== undefined) {
+              closeTab(+x);
+              return;
             }
+            const idx2 = parseInt(this.dataset.idx);
+            if (!isNaN(idx2)) switchTab(idx2);
+          });
+          tabsEl.insertBefore(el, $('btn-newtab'));
+        });
+      }
 
-            /* =============================================
-                   UTILS
-                ============================================= */
-            function enc(u) { return encodeURIComponent(u); }
+      /* ===== NAVIGATION CONTROLS ===== */
+      function navBtns() {
+        const t = cur();
+        if (!t) return;
+        $('btn-back').disabled = t.si <= 0;
+        $('btn-fwd').disabled = t.si >= t.stack.length - 1;
+      }
 
-            function mk(id, title, url) {
-                return { id, title, url, stack: [], si: -1 };
-            }
+      $('btn-back').onclick = () => {
+        const t = cur();
+        if (t.si > 0) { t.si--;
+          navigateTab(t, t.stack[t.si]); }
+      };
+      $('btn-fwd').onclick = () => {
+        const t = cur();
+        if (t.si < t.stack.length - 1) { t.si++;
+          navigateTab(t, t.stack[t.si]); }
+      };
+      $('btn-rl').onclick = () => {
+        const t = cur();
+        if (t.url) navigateTab(t, t.url);
+      };
+      $('btn-home').onclick = () => {
+        const t = cur();
+        navigateTab(t, 'https://www.google.com/webhp');
+      };
 
-            function cur() { return tabs[act]; }
+      urlBar.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const t = cur();
+          if (t) navigateTab(t, urlBar.value);
+        }
+      });
 
-            function norm(raw) {
-                raw = raw.trim();
-                if (!raw) return '';
-                if (/^https?:\/\//i.test(raw)) return raw;
-                if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
-                    return 'https://' + raw;
-                return `https://www.google.com/search?q=${enc(raw)}`;
-            }
+      /* ===== PROXY TOGGLE ===== */
+      $('btn-proxy').onclick = () => {
+        proxyOn = !proxyOn;
+        $('btn-proxy').classList.toggle('on', proxyOn);
+        toast(proxyOn ? 'Proxy ON' : 'Proxy OFF', proxyOn ? 'ok' : 'inf');
+        const t = cur();
+        if (t && t.url) navigateTab(t, t.url);
+      };
 
-            function esc(s) {
-                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#x27;');
-            }
+      /* ===== BOOKMARK ===== */
+      $('btn-bm').onclick = () => {
+        const t = cur();
+        if (!t || !t.url) { toast('Nothing to bookmark', 'inf'); return; }
+        if (bms.find(b => b.url === t.url)) { toast('Already bookmarked', 'inf'); return; }
+        bms.unshift({ url: t.url, title: t.title });
+        saveBms();
+        renderBms();
+        toast('Bookmarked!', 'ok');
+      };
+      $('do-bm').onclick = $('btn-bm').onclick;
 
-            function getHost(u) {
-                try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u.slice(0, 30); }
-            }
+      /* ===== CLOAK ===== */
+      $('btn-cloak').onclick = () => {
+        try {
+          const t = cur();
+          if (!t || !t.url) { toast('Nothing to cloak', 'inf'); return; }
+          const proxyUrl = buildProxyUrl(t.url);
+          const w = window.open(proxyUrl, '_blank', 'width=900,height=700,menubar=no');
+          if (!w) { toast('Pop-ups blocked — allow pop-ups', 'err'); return; }
+          toast('Cloaked window opened ✓', 'ok');
+        } catch (e) {
+          toast('Cloak failed', 'err');
+        }
+      };
 
-            /* =============================================
-                   THEATER MODE (F11)
-                ============================================= */
-            function toggleTheater() {
-                theater = !theater;
-                if (theater) {
-                    if (document.fullscreenEnabled) document.documentElement.requestFullscreen();
-                    else toast('Fullscreen unavailable', 'err');
-                } else {
-                    if (document.fullscreenElement) document.exitFullscreen();
-                }
-            }
-            document.addEventListener('fullscreenchange', () => {
-                theater = !!document.fullscreenElement;
-                if (theater) toast('Theater ON', 'ok');
-            });
-            $('btn-theater').onclick = toggleTheater;
+      function buildProxyUrl(url) {
+        if (!proxyOn) return url;
+        const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
+        return proxy(url);
+      }
 
-            /* =============================================
-                   BUILD PROXY URL
-                ============================================= */
-            function buildProxyUrl(url) {
-                if (!proxyOn) return url;
-                const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
-                return proxy(url);
-            }
+      /* ===== THEATER MODE ===== */
+      function toggleTheater() {
+        theater = !theater;
+        if (theater) {
+          if (document.fullscreenEnabled) document.documentElement.requestFullscreen();
+          else toast('Fullscreen unavailable', 'err');
+        } else {
+          if (document.fullscreenElement) document.exitFullscreen();
+        }
+      }
+      document.addEventListener('fullscreenchange', () => {
+        theater = !!document.fullscreenElement;
+        if (theater) toast('Theater ON', 'ok');
+      });
+      $('btn-theater').onclick = toggleTheater;
 
-            /* =============================================
-                   TABS & IFRAMES
-                ============================================= */
-            function newTab(url) {
-                const t = mk(tid++, 'New Tab', url || '');
-                tabs.push(t);
-                act = tabs.length - 1;
-                renderTabs();
-                createIframeForTab(t);
-                if (url) navigateTab(t, url);
-                else showBlankTab(t);
-                navBtns();
-                urlBar.value = t.url || '';
-            }
-            $('btn-newtab').onclick = () => newTab();
+      /* ===== SIDEBAR ===== */
+      $('btn-sb').onclick = () => { sidebar.classList.add('open');
+        renderSidebar(); };
+      $('sb-close').onclick = () => sidebar.classList.remove('open');
 
-            function createIframeForTab(tab) {
-                // Remove existing iframe if any
-                const old = document.querySelector(`#viewport .tab-iframe[data-tab="${tab.id}"]`);
-                if (old) old.remove();
+      document.querySelectorAll('.sb-tab').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.sb-tab').forEach(b => b.classList.remove('act'));
+          document.querySelectorAll('.sb-pane').forEach(p => p.classList.remove('act'));
+          btn.classList.add('act');
+          $('pane-' + btn.dataset.p).classList.add('act');
+          renderSidebar();
+        };
+      });
 
-                const iframe = document.createElement('iframe');
-                iframe.className = 'tab-iframe';
-                iframe.dataset.tab = tab.id;
-                iframe.allow = 'camera; microphone; geolocation; fullscreen';
-                iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
-                viewport.appendChild(iframe);
+      function renderSidebar() { renderHist();
+        renderBms(); }
 
-                // Store reference
-                tab._iframe = iframe;
-                // Show if active
-                if (tabs.indexOf(tab) === act) {
-                    iframe.classList.add('active');
-                }
+      function renderHist() {
+        const el = $('pane-hist');
+        if (!hist.length) { el.innerHTML = '<div class="empty">No history yet.</div>'; return; }
+        el.innerHTML = '';
+        hist.slice(0, 60).forEach((h, i) => {
+          const div = document.createElement('div');
+          div.className = 'si';
+          div.innerHTML =
+            `
+                    <div class="si-ttl">${esc(h.title)}</div>
+                    <div class="si-url">${esc(h.url)}</div>
+                    <div class="si-row"></div>`;
+          const row = div.querySelector('.si-row');
 
-                // Intercept navigation inside iframe
-                iframe.addEventListener('load', function() {
-                    // Try to inject link interceptor
-                    try {
-                        const doc = iframe.contentDocument || iframe.contentWindow.document;
-                        if (doc) {
-                            // Intercept all link clicks
-                            doc.addEventListener('click', function(e) {
-                                let el = e.target.closest('a');
-                                if (el && el.href) {
-                                    e.preventDefault();
-                                    const href = el.href;
-                                    // Only handle http/https URLs
-                                    if (href.startsWith('http')) {
-                                        const curTab = cur();
-                                        if (curTab) {
-                                            navigateTab(curTab, href);
-                                        }
-                                    } else if (href.startsWith('/') || href.startsWith('#')) {
-                                        // Let normal navigation happen for relative links
-                                        return;
-                                    }
-                                }
-                            }, true);
-                        }
-                    } catch (err) {
-                        // Cross-origin iframe - can't inject
-                        // We'll rely on the user using the address bar
-                    }
-                });
-            }
+          const visitBtn = document.createElement('button');
+          visitBtn.className = 'sm';
+          visitBtn.textContent = 'Visit';
+          visitBtn.onclick = () => {
+            const t = cur();
+            if (t) { navigateTab(t, h.url);
+              sidebar.classList.remove('open'); }
+          };
 
-            function showBlankTab(tab) {
-                const iframe = tab._iframe;
-                if (!iframe) return;
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc) {
-                        doc.open();
-                        doc.write(`
-                                <html>
-                                <head><title>New Tab</title>
-                                <style>
-                                body { background: #0c0c1e; color: #e0efff; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; margin: 0; }
-                                h1 { font-size: 2rem; font-weight: 300; color: rgba(0, 210, 255, 0.4); letter-spacing: 3px; }
-                                p { color: rgba(224, 239, 255, 0.2); font-size: 0.9rem; }
-                                .icon { font-size: 4rem; margin-bottom: 16px; color: rgba(0, 210, 255, 0.15); }
-                                </style>
-                                </head>
-                                <body>
-                                <div class="icon">⬡</div>
-                                <h1>CROWN NEXUS</h1>
-                                <p>Enter a URL in the address bar above</p>
-                                </body>
-                                </html>
-                            `);
-                        doc.close();
-                    }
-                } catch (err) {
-                    // Cross-origin or other issue
-                }
-            }
+          const delBtn = document.createElement('button');
+          delBtn.className = 'sm';
+          delBtn.textContent = '✕';
+          delBtn.onclick = () => { hist.splice(i, 1);
+            saveHist();
+            renderHist(); };
 
-            function navigateTab(tab, url) {
-                const finalUrl = norm(url);
-                if (!finalUrl) return;
-                tab.url = finalUrl;
-                tab.title = getHost(finalUrl);
+          row.appendChild(visitBtn);
+          row.appendChild(delBtn);
+          el.appendChild(div);
+        });
+      }
 
-                // Push to stack
-                if (tab.si < 0 || tab.stack[tab.si] !== finalUrl) {
-                    tab.stack = tab.stack.slice(0, tab.si + 1);
-                    tab.stack.push(finalUrl);
-                    tab.si = tab.stack.length - 1;
-                }
+      function renderBms() {
+        const el = $('bm-list');
+        if (!bms.length) { el.innerHTML = '<div class="empty">No bookmarks yet.</div>'; return; }
+        el.innerHTML = '';
+        bms.forEach((b, i) => {
+          const div = document.createElement('div');
+          div.className = 'si';
+          div.innerHTML =
+            `
+                    <div class="si-ttl">${esc(b.title)}</div>
+                    <div class="si-url">${esc(b.url)}</div>
+                    <div class="si-row"></div>`;
+          const row = div.querySelector('.si-row');
 
-                const iframe = tab._iframe;
-                if (!iframe) {
-                    createIframeForTab(tab);
-                }
+          const visitBtn = document.createElement('button');
+          visitBtn.className = 'sm';
+          visitBtn.textContent = 'Visit';
+          visitBtn.onclick = () => {
+            const t = cur();
+            if (t) { navigateTab(t, b.url);
+              sidebar.classList.remove('open'); }
+          };
 
-                // Load via proxy
-                const proxyUrl = buildProxyUrl(finalUrl);
-                iframe.src = proxyUrl;
+          const delBtn = document.createElement('button');
+          delBtn.className = 'sm';
+          delBtn.textContent = '✕';
+          delBtn.onclick = () => { bms.splice(i, 1);
+            saveBms();
+            renderBms(); };
 
-                // Update UI
-                if (tabs.indexOf(tab) === act) {
-                    urlBar.value = finalUrl;
-                }
-                renderTabs();
-                navBtns();
-                addHist(finalUrl);
+          row.appendChild(visitBtn);
+          row.appendChild(delBtn);
+          el.appendChild(div);
+        });
+      }
 
-                // Show iframe if active
-                if (tabs.indexOf(tab) === act) {
-                    document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                    iframe.classList.add('active');
-                }
-            }
+      /* ===== PERSIST ===== */
+      function addHist(url) {
+        const title = getHost(url) || 'Untitled';
+        hist = hist.filter(h => h.url !== url);
+        hist.unshift({ url, title });
+        if (hist.length > 100) hist.length = 100;
+        saveHist();
+      }
 
-            function switchTab(idx) {
-                if (idx < 0 || idx >= tabs.length) return;
-                act = idx;
-                const tab = cur();
+      function saveHist() { try { localStorage.setItem('cr_hist', JSON.stringify(hist)); } catch {} }
 
-                // Update iframe visibility
-                document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                if (tab._iframe) {
-                    tab._iframe.classList.add('active');
-                } else {
-                    createIframeForTab(tab);
-                    if (tab.url) {
-                        navigateTab(tab, tab.url);
-                    } else {
-                        showBlankTab(tab);
-                    }
-                }
+      function saveBms() { try { localStorage.setItem('cr_bm', JSON.stringify(bms)); } catch {} }
 
-                urlBar.value = tab.url || '';
-                renderTabs();
-                navBtns();
-            }
+      /* ===== KEYBOARD SHORTCUTS ===== */
+      document.addEventListener('keydown', e => {
+        const tag = e.target.tagName;
+        if (tag === 'INPUT' || e.target.isContentEditable) return;
+        if (e.key === 'Escape') {
+          if (theater) toggleTheater();
+          sidebar.classList.remove('open');
+        }
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+          e.preventDefault();
+          $('btn-rl').click();
+        }
+        if (e.key === 'F11') { e.preventDefault();
+          toggleTheater(); }
+        if (e.ctrlKey && e.key === 't') { e.preventDefault();
+          newTab(); }
+        if (e.ctrlKey && e.key === 'w') { e.preventDefault();
+          closeTab(act); }
+        if (e.altKey && e.key === 'ArrowLeft') $('btn-back').click();
+        if (e.altKey && e.key === 'ArrowRight') $('btn-fwd').click();
+        if (e.key === 'F6') { e.preventDefault();
+          urlBar.select(); }
+      });
 
-            function closeTab(idx) {
-                if (tabs.length <= 1) {
-                    toast('Cannot close the last tab', 'inf');
-                    return;
-                }
-                const tab = tabs[idx];
-                if (tab._iframe) {
-                    tab._iframe.remove();
-                }
-                tabs.splice(idx, 1);
+      /* ===== TOAST ===== */
+      let ttimer;
 
-                if (act === idx) {
-                    act = Math.min(idx, tabs.length - 1);
-                } else if (act > idx) {
-                    act--;
-                }
+      function toast(msg, type = 'inf') {
+        toastEl.textContent = msg;
+        toastEl.className = `show ${type}`;
+        clearTimeout(ttimer);
+        ttimer = setTimeout(() => { toastEl.className = ''; }, 2700);
+      }
+      window.toast = toast;
 
-                // Ensure active tab's iframe is shown
-                const newTab = cur();
-                document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                if (newTab._iframe) {
-                    newTab._iframe.classList.add('active');
-                } else {
-                    createIframeForTab(newTab);
-                    if (newTab.url) {
-                        navigateTab(newTab, newTab.url);
-                    } else {
-                        showBlankTab(newTab);
-                    }
-                }
-
-                urlBar.value = newTab.url || '';
-                renderTabs();
-                navBtns();
-            }
-
-            /* =============================================
-                   RENDER TABS
-                ============================================= */
-            function renderTabs() {
-                // Remove existing tab elements (but keep the newtab button)
-                tabsEl.querySelectorAll('.tab').forEach(el => el.remove());
-
-                tabs.forEach((t, idx) => {
-                    const el = document.createElement('div');
-                    el.className = 'tab' + (idx === act ? ' act' : '');
-                    el.dataset.idx = idx;
-                    el.innerHTML =
-                        `<span class="tab-lbl">${esc(t.title || 'New Tab')}</span><span class="tab-x" data-idx="${idx}">✕</span>`;
-                    el.addEventListener('click', function(e) {
-                        const x = e.target.dataset.idx;
-                        if (x !== undefined) {
-                            closeTab(+x);
-                            return;
-                        }
-                        const idx2 = parseInt(this.dataset.idx);
-                        if (!isNaN(idx2)) switchTab(idx2);
-                    });
-                    tabsEl.insertBefore(el, $('btn-newtab'));
-                });
-            }
-
-            /* =============================================
-                   NAVIGATION CONTROLS
-                ============================================= */
-            function navBtns() {
-                const t = cur();
-                if (!t) return;
-                $('btn-back').disabled = t.si <= 0;
-                $('btn-fwd').disabled = t.si >= t.stack.length - 1;
-            }
-
-            $('btn-back').onclick = () => {
-                const t = cur();
-                if (t.si > 0) { t.si--;
-                    navigateTab(t, t.stack[t.si]); }
-            };
-            $('btn-fwd').onclick = () => {
-                const t = cur();
-                if (t.si < t.stack.length - 1) { t.si++;
-                    navigateTab(t, t.stack[t.si]); }
-            };
-            $('btn-rl').onclick = () => {
-                const t = cur();
-                if (t.url) navigateTab(t, t.url);
-            };
-            $('btn-home').onclick = () => {
-                const t = cur();
-                navigateTab(t, 'https://www.google.com/webhp');
-            };
-
-            urlBar.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    const t = cur();
-                    if (t) navigateTab(t, urlBar.value);
-                }
-            });
-
-            /* =============================================
-                   PROXY TOGGLE
-                ============================================= */
-            $('btn-proxy').onclick = () => {
-                proxyOn = !proxyOn;
-                $('btn-proxy').classList.toggle('on', proxyOn);
-                toast(proxyOn ? 'Proxy ON' : 'Proxy OFF', proxyOn ? 'ok' : 'inf');
-                const t = cur();
-                if (t && t.url) navigateTab(t, t.url);
-            };
-
-            /* =============================================
-                   BOOKMARK
-                ============================================= */
-            $('btn-bm').onclick = () => {
-                const t = cur();
-                if (!t || !t.url) { toast('Nothing to bookmark', 'inf'); return; }
-                if (bms.find(b => b.url === t.url)) { toast('Already bookmarked', 'inf'); return; }
-                bms.unshift({ url: t.url, title: t.title });
-                saveBms();
-                renderBms();
-                toast('Bookmarked!', 'ok');
-            };
-            $('do-bm').onclick = $('btn-bm').onclick;
-
-            /* =============================================
-                   CLOAK
-                ============================================= */
-            $('btn-cloak').onclick = () => {
-                try {
-                    const t = cur();
-                    if (!t || !t.url) { toast('Nothing to cloak', 'inf'); return; }
-                    const proxyUrl = buildProxyUrl(t.url);
-                    const w = window.open(proxyUrl, '_blank', 'width=900,height=700,menubar=no');
-                    if (!w) { toast('Pop-ups blocked — allow pop-ups', 'err'); return; }
-                    toast('Cloaked window opened ✓', 'ok');
-                } catch (e) {
-                    toast('Cloak failed', 'err');
-                }
-            };
-
-            /* =============================================
-                   SIDEBAR
-                ============================================= */
-            $('btn-sb').onclick = () => { sidebar.classList.add('open');
-                renderSidebar(); };
-            $('sb-close').onclick = () => sidebar.classList.remove('open');
-
-            document.querySelectorAll('.sb-tab').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.sb-tab').forEach(b => b.classList.remove('act'));
-                    document.querySelectorAll('.sb-pane').forEach(p => p.classList.remove('act'));
-                    btn.classList.add('act');
-                    $('pane-' + btn.dataset.p).classList.add('act');
-                    renderSidebar();
-                };
-            });
-
-            function renderSidebar() { renderHist();
-                renderBms(); }
-
-            function renderHist() {
-                const el = $('pane-hist');
-                if (!hist.length) { el.innerHTML = '<div class="empty">No history yet.</div>'; return; }
-                el.innerHTML = '';
-                hist.slice(0, 60).forEach((h, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'si';
-                    div.innerHTML =
-                        `
-                            <div class="si-ttl">${esc(h.title)}</div>
-                            <div class="si-url">${esc(h.url)}</div>
-                            <div class="si-row"></div>`;
-                    const row = div.querySelector('.si-row');
-
-                    const visitBtn = document.createElement('button');
-                    visitBtn.className = 'sm';
-                    visitBtn.textContent = 'Visit';
-                    visitBtn.onclick = () => {
-                        const t = cur();
-                        if (t) { navigateTab(t, h.url);
-                            sidebar.classList.remove('open'); }
-                    };
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'sm';
-                    delBtn.textContent = '✕';
-                    delBtn.onclick = () => { hist.splice(i, 1);
-                        saveHist();
-                        renderHist(); };
-
-                    row.appendChild(visitBtn);
-                    row.appendChild(delBtn);
-                    el.appendChild(div);
-                });
-            }
-
-            function renderBms() {
-                const el = $('bm-list');
-                if (!bms.length) { el.innerHTML = '<div class="empty">No bookmarks yet.</div>'; return; }
-                el.innerHTML = '';
-                bms.forEach((b, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'si';
-                    div.innerHTML =
-                        `
-                            <div class="si-ttl">${esc(b.title)}</div>
-                            <div class="si-url">${esc(b.url)}</div>
-                            <div class="si-row"></div>`;
-                    const row = div.querySelector('.si-row');
-
-                    const visitBtn = document.createElement('button');
-                    visitBtn.className = 'sm';
-                    visitBtn.textContent = 'Visit';
-                    visitBtn.onclick = () => {
-                        const t = cur();
-                        if (t) { navigateTab(t, b.url);
-                            sidebar.classList.remove('open'); }
-                    };
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'sm';
-                    delBtn.textContent = '✕';
-                    delBtn.onclick = () => { bms.splice(i, 1);
-                        saveBms();
-                        renderBms(); };
-
-                    row.appendChild(visitBtn);
-                    row.appendChild(delBtn);
-                    el.appendChild(div);
-                });
-            }
-
-            /* =============================================
-                   PERSIST
-                ============================================= */
-            function addHist(url) {
-                const title = getHost(url) || 'Untitled';
-                hist = hist.filter(h => h.url !== url);
-                hist.unshift({ url, title });
-                if (hist.length > 100) hist.length = 100;
-                saveHist();
-            }
-
-            function saveHist() { try { localStorage.setItem('cr_hist', JSON.stringify(hist)); } catch {} }
-
-            function saveBms() { try { localStorage.setItem('cr_bm', JSON.stringify(bms)); } catch {} }
-
-            /* =============================================
-                   KEYBOARD SHORTCUTS
-                ============================================= */
-            document.addEventListener('keydown', e => {
-                const tag = e.target.tagName;
-                if (tag === 'INPUT' || e.target.isContentEditable) return;
-                if (e.key === 'Escape') {
-                    if (theater) toggleTheater();
-                    sidebar.classList.remove('open');
-                }
-                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                    e.preventDefault();
-                    $('btn-rl').click();
-                }
-                if (e.key === 'F11') { e.preventDefault();
-                    toggleTheater(); }
-                if (e.ctrlKey && e.key === 't') { e.preventDefault();
-                    newTab(); }
-                if (e.ctrlKey && e.key === 'w') { e.preventDefault();
-                    closeTab(act); }
-                if (e.altKey && e.key === 'ArrowLeft') $('btn-back').click();
-                if (e.altKey && e.key === 'ArrowRight') $('btn-fwd').click();
-                if (e.key === 'F6') { e.preventDefault();
-                    urlBar.select(); }
-            });
-
-            /* =============================================
-                   TOAST
-                ============================================= */
-            let ttimer;
-
-            function toast(msg, type = 'inf') {
-                toastEl.textContent = msg;
-                toastEl.className = `show ${type}`;
-                clearTimeout(ttimer);
-                ttimer = setTimeout(() => { toastEl.className = ''; }, 2700);
-            }
-            window.toast = toast;
-
-        })();
-    </script>
+    })();
+  </script>
 </body>
 </html>
