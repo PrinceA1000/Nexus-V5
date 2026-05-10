@@ -671,21 +671,6 @@
         (function() {
             'use strict';
 
-            /* ===== PROXY ENGINE (Multiple sources) ===== */
-            const PROXY_SOURCES = [
-                // Primary: allorigins (most reliable)
-                u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                // Secondary: codetabs
-                u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-                // Fallback: corsproxy.io
-                u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-                // Last resort: thingproxy (may be slow)
-                u => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`
-            ];
-
-            /* ===== SEARCH ENGINE (No CAPTCHA) ===== */
-            const SEARCH_ENGINE = 'https://search.brave.com/search?q=';
-
             /* ===== DOM REFS ===== */
             const $ = id => document.getElementById(id);
             const urlBar = $('url');
@@ -698,9 +683,7 @@
             let tabs = [];
             let tid = 1;
             let act = 0;
-            let proxyOn = true;
             let theater = false;
-            let proxyIndex = 0;
 
             let hist = [];
             let bms = [];
@@ -709,7 +692,7 @@
 
             /* ===== UTILITIES ===== */
             function mk(id, title, url) {
-                return { id, title, url, stack: [], si: -1 };
+                return { id, title, url };
             }
 
             function cur() { return tabs[act]; }
@@ -721,54 +704,15 @@
             function norm(input) {
                 let raw = input.trim();
                 if (!raw) return '';
-
-                // If it's already a URL, return it
                 if (/^https?:\/\//i.test(raw)) return raw;
-
-                // If it looks like a domain, add https
                 if (/^[a-z0-9-]+(\.[a-z]{2,})+/i.test(raw) && !raw.includes(' '))
                     return 'https://' + raw;
-
-                // Search using Brave (no CAPTCHA, works in iframe)
-                return SEARCH_ENGINE + encodeURIComponent(raw);
+                return `https://www.bing.com/search?q=${encodeURIComponent(raw)}`;
             }
 
             function esc(s) {
                 return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
                     .replace(/'/g, '&#x27;');
-            }
-
-            /* ===== BLOCKED SITES DETECTION ===== */
-            function isBlockedSite(url) {
-                try {
-                    const host = new URL(url).hostname;
-                    const blocked = [
-                        'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
-                        'reddit.com', 'instagram.com', 'facebook.com',
-                        'tiktok.com', 'twitch.tv', 'discord.com',
-                        'crunchyroll.com', 'animepahe.ch', 'anikai.to',
-                        'netflix.com', 'hulu.com', 'disneyplus.com',
-                        'spotify.com', 'soundcloud.com'
-                    ];
-                    return blocked.some(d => host.includes(d));
-                } catch {
-                    return false;
-                }
-            }
-
-            /* ===== YOUTUBE EMBED HELPER ===== */
-            function getYouTubeEmbedUrl(url) {
-                const patterns = [
-                    /(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/,
-                    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/
-                ];
-                for (const p of patterns) {
-                    const m = url.match(p);
-                    if (m) {
-                        return `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
-                    }
-                }
-                return null;
             }
 
             /* ===== BOOT ===== */
@@ -796,7 +740,6 @@
                 tabs.push(t);
                 act = tabs.length - 1;
                 renderTabs();
-                createIframeForTab(t);
                 if (url) {
                     navigateTab(t, url);
                 } else {
@@ -807,244 +750,57 @@
             }
             $('btn-newtab').onclick = () => newTab();
 
-            function createIframeForTab(tab) {
-                const old = document.querySelector(`#viewport .tab-iframe[data-tab="${tab.id}"]`);
-                if (old) old.remove();
+            function showBlankTab(tab) {
+                const iframe = tab._iframe;
+                if (!iframe) {
+                    createIframeForTab(tab);
+                }
+                const doc = tab._iframe.contentDocument || tab._iframe.contentWindow.document;
+                if (doc) {
+                    doc.open();
+                    doc.write(`
+                        <html><head><title>New Tab</title>
+                        <style>
+                            body { background: #0c0c1e; color: #e0efff; font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; margin: 0; }
+                            h1 { font-size: 2rem; font-weight: 300; color: rgba(0, 210, 255, 0.4); letter-spacing: 3px; }
+                            p { color: rgba(224, 239, 255, 0.2); font-size: 0.9rem; }
+                            .icon { font-size: 4rem; margin-bottom: 16px; color: rgba(0, 210, 255, 0.15); }
+                        </style>
+                        </head><body>
+                        <div class="icon">⬡</div>
+                        <h1>CROWN NEXUS</h1>
+                        <p>Enter a URL in the address bar above</p>
+                        </body></html>
+                    `);
+                    doc.close();
+                }
+            }
 
+            function createIframeForTab(tab) {
                 const iframe = document.createElement('iframe');
                 iframe.className = 'tab-iframe';
                 iframe.dataset.tab = tab.id;
                 iframe.allow = 'camera; microphone; geolocation; fullscreen';
-                iframe.sandbox =
-                    'allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation';
+                iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation';
                 viewport.appendChild(iframe);
                 tab._iframe = iframe;
-
                 if (tabs.indexOf(tab) === act) iframe.classList.add('active');
-
-                // Intercept link clicks in iframe
-                iframe.addEventListener('load', function() {
-                    try {
-                        const doc = iframe.contentDocument || iframe.contentWindow.document;
-                        if (!doc) return;
-                        doc.addEventListener('click', function(e) {
-                            let el = e.target.closest('a');
-                            if (el && el.href) {
-                                e.preventDefault();
-                                const href = el.href;
-                                if (href.startsWith('http') && !href.startsWith(SEARCH_ENGINE)) {
-                                    const curTab = cur();
-                                    if (curTab) navigateTab(curTab, href);
-                                }
-                            }
-                        }, true);
-                    } catch (err) {
-                        // cross-origin — ignore
-                    }
-                });
             }
 
-            function showBlankTab(tab) {
-                const iframe = tab._iframe;
-                if (!iframe) return;
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc) {
-                        doc.open();
-                        doc.write(`
-              <html>
-              <head><title>New Tab</title>
-              <style>
-                body {
-                  background: #0c0c1e;
-                  color: #e0efff;
-                  font-family: 'Nunito', sans-serif;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  flex-direction: column;
-                  height: 100vh;
-                  margin: 0;
-                }
-                h1 {
-                  font-size: 2rem;
-                  font-weight: 300;
-                  color: rgba(0, 210, 255, 0.4);
-                  letter-spacing: 3px;
-                }
-                p {
-                  color: rgba(224, 239, 255, 0.2);
-                  font-size: 0.9rem;
-                }
-                .icon {
-                  font-size: 4rem;
-                  margin-bottom: 16px;
-                  color: rgba(0, 210, 255, 0.15);
-                }
-              </style>
-              </head>
-              <body>
-                <div class="icon">⬡</div>
-                <h1>CROWN NEXUS</h1>
-                <p>Enter a URL in the address bar above</p>
-              </body>
-              </html>
-            `);
-                        doc.close();
-                    }
-                } catch (err) {}
-            }
-
-            /* ===== NAVIGATION ENGINE (Utopia‑style) ===== */
+            /* ===== NAVIGATION (FULL BROWSER MODE) ===== */
             function navigateTab(tab, input) {
                 const finalUrl = norm(input);
                 if (!finalUrl) return;
 
-                // SPECIAL: YouTube embed (works inside iframe)
-                if (finalUrl.includes('youtube.com/watch') || finalUrl.includes('youtu.be/')) {
-                    const embedUrl = getYouTubeEmbedUrl(finalUrl);
-                    if (embedUrl) {
-                        tab.url = finalUrl;
-                        tab.title = 'YouTube';
-                        const iframe = tab._iframe;
-                        if (!iframe) { createIframeForTab(tab); }
-                        iframe.src = embedUrl;
-                        if (tabs.indexOf(tab) === act) { urlBar.value = finalUrl; }
-                        renderTabs();
-                        navBtns();
-                        addHist(finalUrl);
-                        document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                        iframe.classList.add('active');
-                        return;
-                    }
-                }
-
-                // Blocked sites → open in new window
-                if (isBlockedSite(finalUrl)) {
-                    const w = window.open(finalUrl, '_blank', 'width=1000,height=750,menubar=yes,location=yes,status=yes');
-                    if (!w) {
-                        toast('Popup blocked. Please allow pop-ups for embedded sites.', 'err');
-                        showFallbackMessage(tab, finalUrl, 'Site cannot be embedded. Open in new window?');
-                    } else {
-                        toast('Opened in new window (site blocks iframes)', 'inf');
-                        tab.url = finalUrl;
-                        tab.title = getHost(finalUrl);
-                        if (tabs.indexOf(tab) === act) { urlBar.value = finalUrl; }
-                        renderTabs();
-                        navBtns();
-                        addHist(finalUrl);
-                        showFallbackMessage(tab, finalUrl, 'Opened in new window ✓');
-                    }
-                    return;
-                }
-
-                // Standard navigation
                 tab.url = finalUrl;
                 tab.title = getHost(finalUrl);
 
-                if (tab.si < 0 || tab.stack[tab.si] !== finalUrl) {
-                    tab.stack = tab.stack.slice(0, tab.si + 1);
-                    tab.stack.push(finalUrl);
-                    tab.si = tab.stack.length - 1;
-                }
-
-                const iframe = tab._iframe;
-                if (!iframe) { createIframeForTab(tab); }
-
-                // Determine load URL
-                let loadUrl = finalUrl;
-                if (proxyOn && !finalUrl.startsWith(SEARCH_ENGINE)) {
-                    // Rotate through proxy sources
-                    const proxyFn = PROXY_SOURCES[proxyIndex % PROXY_SOURCES.length];
-                    proxyIndex++;
-                    loadUrl = proxyFn(finalUrl);
-                }
-
-                iframe.src = loadUrl;
-
-                // Error detection with timeout
-                let loadTimer = setTimeout(() => {
-                    try {
-                        const doc = iframe.contentDocument || iframe.contentWindow.document;
-                        if (!doc || doc.URL === 'about:blank' || (doc.URL === loadUrl && !doc.body?.innerHTML.trim())) {
-                            showFallbackMessage(tab, finalUrl, 'Site failed to load. Open in new window?');
-                        }
-                    } catch (err) {
-                        showFallbackMessage(tab, finalUrl, 'Site cannot be embedded. Open in new window?');
-                    }
-                }, 15000);
-
-                iframe.onload = function() {
-                    clearTimeout(loadTimer);
-                };
-
-                if (tabs.indexOf(tab) === act) { urlBar.value = finalUrl; }
                 renderTabs();
                 navBtns();
                 addHist(finalUrl);
 
-                document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                iframe.classList.add('active');
-            }
-
-            /* ===== FALLBACK MESSAGE ===== */
-            function showFallbackMessage(tab, originalUrl, message) {
-                const iframe = tab._iframe;
-                if (!iframe) return;
-                try {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (!doc) return;
-                    doc.open();
-                    doc.write(`
-            <html><head><title>${esc(originalUrl)}</title>
-            <style>
-              body {
-                background: #0c0c1e;
-                color: #e0efff;
-                font-family: 'Nunito', sans-serif;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-direction: column;
-                height: 100vh;
-                margin: 0;
-                padding: 20px;
-              }
-              .box {
-                max-width: 500px;
-                text-align: center;
-              }
-              h2 { font-size: 1.5rem; color: var(--cyan); margin-bottom: 8px; }
-              p { color: var(--dim); margin: 8px 0; }
-              button {
-                padding: 8px 20px;
-                margin: 6px;
-                background: rgba(0,210,255,0.08);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                color: var(--cyan);
-                cursor: pointer;
-                transition: .2s;
-                font-size: 13px;
-              }
-              button:hover { background: var(--cyan); color: #000; }
-            </style>
-            </head>
-            <body>
-            <div class="box">
-              <h2>⬡ Crown Nexus</h2>
-              <p><strong>${esc(message)}</strong></p>
-              <p>${esc(originalUrl)}</p>
-              <div>
-                <button onclick="window.open('${esc(originalUrl)}', '_blank')">Open in New Window</button>
-                <button onclick="window.location.reload()">Retry</button>
-              </div>
-            </div>
-            </body></html>
-          `);
-                    doc.close();
-                } catch (err) {}
-                toast(message, 'inf');
+                // ALWAYS open in the main browser window (no iframe limitations)
+                window.location.href = finalUrl;
             }
 
             /* ===== SWITCH TAB ===== */
@@ -1052,17 +808,6 @@
                 if (idx < 0 || idx >= tabs.length) return;
                 act = idx;
                 const tab = cur();
-                document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                if (tab._iframe) {
-                    tab._iframe.classList.add('active');
-                } else {
-                    createIframeForTab(tab);
-                    if (tab.url) {
-                        navigateTab(tab, tab.url);
-                    } else {
-                        showBlankTab(tab);
-                    }
-                }
                 urlBar.value = tab.url || '';
                 renderTabs();
                 navBtns();
@@ -1074,30 +819,12 @@
                     toast('Cannot close the last tab', 'inf');
                     return;
                 }
-                const tab = tabs[idx];
-                if (tab._iframe) { tab._iframe.remove(); }
                 tabs.splice(idx, 1);
-
                 if (act === idx) {
                     act = Math.min(idx, tabs.length - 1);
                 } else if (act > idx) {
                     act--;
                 }
-
-                const newTab = cur();
-                document.querySelectorAll('#viewport .tab-iframe').forEach(el => el.classList.remove('active'));
-                if (newTab._iframe) {
-                    newTab._iframe.classList.add('active');
-                } else {
-                    createIframeForTab(newTab);
-                    if (newTab.url) {
-                        navigateTab(newTab, newTab.url);
-                    } else {
-                        showBlankTab(newTab);
-                    }
-                }
-
-                urlBar.value = newTab.url || '';
                 renderTabs();
                 navBtns();
             }
@@ -1124,29 +851,14 @@
             /* ===== NAVIGATION CONTROLS ===== */
             function navBtns() {
                 const t = cur();
-                if (!t) return;
-                $('btn-back').disabled = t.si <= 0;
-                $('btn-fwd').disabled = t.si >= t.stack.length - 1;
+                $('btn-back').disabled = true;
+                $('btn-fwd').disabled = true;
             }
 
-            $('btn-back').onclick = () => {
-                const t = cur();
-                if (t.si > 0) { t.si--;
-                    navigateTab(t, t.stack[t.si]); }
-            };
-            $('btn-fwd').onclick = () => {
-                const t = cur();
-                if (t.si < t.stack.length - 1) { t.si++;
-                    navigateTab(t, t.stack[t.si]); }
-            };
-            $('btn-rl').onclick = () => {
-                const t = cur();
-                if (t.url) navigateTab(t, t.url);
-            };
-            $('btn-home').onclick = () => {
-                const t = cur();
-                navigateTab(t, 'https://www.google.com/webhp');
-            };
+            $('btn-back').onclick = () => { history.back(); };
+            $('btn-fwd').onclick = () => { history.forward(); };
+            $('btn-rl').onclick = () => { location.reload(); };
+            $('btn-home').onclick = () => { navigateTab(cur(), 'https://www.google.com/webhp'); };
 
             urlBar.addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
@@ -1154,15 +866,6 @@
                     if (t) navigateTab(t, urlBar.value);
                 }
             });
-
-            /* ===== PROXY TOGGLE ===== */
-            $('btn-proxy').onclick = () => {
-                proxyOn = !proxyOn;
-                $('btn-proxy').classList.toggle('on', proxyOn);
-                toast(proxyOn ? 'Proxy ON' : 'Proxy OFF', proxyOn ? 'ok' : 'inf');
-                const t = cur();
-                if (t && t.url) navigateTab(t, t.url);
-            };
 
             /* ===== BOOKMARK ===== */
             $('btn-bm').onclick = () => {
@@ -1241,9 +944,8 @@
                     visitBtn.className = 'sm';
                     visitBtn.textContent = 'Visit';
                     visitBtn.onclick = () => {
-                        const t = cur();
-                        if (t) { navigateTab(t, h.url);
-                            sidebar.classList.remove('open'); }
+                        navigateTab(cur(), h.url);
+                        sidebar.classList.remove('open');
                     };
 
                     const delBtn = document.createElement('button');
@@ -1277,9 +979,8 @@
                     visitBtn.className = 'sm';
                     visitBtn.textContent = 'Visit';
                     visitBtn.onclick = () => {
-                        const t = cur();
-                        if (t) { navigateTab(t, b.url);
-                            sidebar.classList.remove('open'); }
+                        navigateTab(cur(), b.url);
+                        sidebar.classList.remove('open');
                     };
 
                     const delBtn = document.createElement('button');
