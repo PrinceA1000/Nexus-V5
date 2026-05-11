@@ -765,7 +765,33 @@
         if (url) {
           navigateTab(t, url);
         } else {
-          showBlankTab(t);
+          doc.write(`
+  <html>
+  <head><title>New Tab</title>
+  <style>
+    body {
+      background: #0c0c1e;
+      color: #e0efff;
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+    .icon { font-size: 5rem; color: rgba(0,210,255,0.15); }
+    h1 { font-size: 2.5rem; color: #00d2ff; letter-spacing: 4px; }
+    p { color: #444; margin-top: 8px; }
+  </style>
+  </head>
+  <body>
+    <div class="icon">⬡</div>
+    <h1>CROWN NEXUS</h1>
+    <p>Enter a URL in the address bar above</p>
+  </body>
+  </html>
+`);;
         }
         navBtns();
         urlBar.value = t.url || '';
