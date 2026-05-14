@@ -40,6 +40,7 @@
       overflow: hidden;
       user-select: none;
     }
+
     /* ===== BOOT ===== */
     #boot {
       position: fixed;
@@ -61,6 +62,7 @@
         pointer-events: none;
       }
     }
+
     .b-logo {
       font-family: 'Rajdhani', sans-serif;
       font-size: 2.8rem;
@@ -99,6 +101,7 @@
       border-radius: 1px;
       transition: width 0.8s cubic-bezier(.4, 0, .2, 1);
     }
+
     /* ===== APP SHELL ===== */
     #app {
       position: fixed;
@@ -109,6 +112,7 @@
     #app.on {
       display: flex;
     }
+
     /* ===== TOP BAR ===== */
     #topbar {
       height: var(--topH);
@@ -130,6 +134,7 @@
       pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px);
     }
+
     .logo-wrap {
       display: flex;
       align-items: center;
@@ -157,12 +162,14 @@
       color: var(--text);
       text-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
     }
+
     .sep {
       width: 1px;
       height: 18px;
       background: var(--border);
       flex-shrink: 0;
     }
+
     .ico {
       width: 32px;
       height: 32px;
@@ -186,6 +193,7 @@
       opacity: .2;
       cursor: not-allowed;
     }
+
     .addr {
       flex: 1;
       position: relative;
@@ -220,12 +228,14 @@
       font-size: 12px;
       pointer-events: none;
     }
+
     .rgroup {
       display: flex;
       gap: 4px;
       flex-shrink: 0;
       align-items: center;
     }
+
     .pbtn {
       height: 28px;
       padding: 0 10px;
@@ -260,6 +270,7 @@
       background: var(--cyan);
       box-shadow: 0 0 8px var(--cyan);
     }
+
     /* ===== TAB BAR ===== */
     #tabs {
       height: var(--tabH);
@@ -279,6 +290,7 @@
     #tabs::-webkit-scrollbar-thumb {
       background: var(--border);
     }
+
     .tab {
       height: 26px;
       min-width: 80px;
@@ -329,6 +341,7 @@
       background: rgba(239, 68, 68, 0.2);
       color: var(--red);
     }
+
     .newtab {
       width: 24px;
       height: 24px;
@@ -348,6 +361,7 @@
       color: var(--cyan);
       border-color: var(--bh);
     }
+
     /* ===== VIEWPORT ===== */
     #viewport {
       flex: 1;
@@ -368,6 +382,7 @@
     #viewport .tab-iframe.active {
       display: block;
     }
+
     /* ===== SIDEBAR ===== */
     #sidebar {
       position: absolute;
@@ -387,6 +402,7 @@
     #sidebar.open {
       transform: translateX(0);
     }
+
     .sb-hdr {
       display: flex;
       border-bottom: 1px solid var(--border);
@@ -437,6 +453,7 @@
       background: rgba(239, 68, 68, 0.13);
       color: var(--red);
     }
+
     .sb-pane {
       flex: 1;
       overflow-y: auto;
@@ -453,6 +470,7 @@
       background: var(--border);
       border-radius: 2px;
     }
+
     .sb-add {
       display: block;
       width: 100%;
@@ -473,6 +491,7 @@
       color: var(--cyan);
       background: rgba(0, 210, 255, 0.05);
     }
+
     .si {
       padding: 10px 12px;
       margin-bottom: 6px;
@@ -529,6 +548,7 @@
       color: var(--dim);
       font-size: 12px;
     }
+
     /* ===== TOAST ===== */
     #toast {
       position: fixed;
@@ -564,6 +584,7 @@
       border-color: var(--cyan);
       color: var(--cyan);
     }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 600px) {
       .logo-text,
@@ -669,10 +690,11 @@
 
       // ===== PROXY CONFIG =====
       // 🔥 Main proxy: Puppeteer-based (runs JavaScript, handles X-Frame-Options)
+      // ⚠️ Change this to your actual Render Puppeteer proxy URL
+      const PROXY_URL = 'https://crown-puppeteer.onrender.com';
+
       const PROXY_FALLBACK = [
-        // ⚠️ Change this to your actual Render Puppeteer proxy URL
-        u => `https://crown-puppeteer.onrender.com/proxy?url=${encodeURIComponent(u)}`,
-        // 🔥 Backup proxies (in case the main proxy is down or slow)
+        u => `${PROXY_URL}/proxy?url=${encodeURIComponent(u)}`,
         u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
         u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
       ];
